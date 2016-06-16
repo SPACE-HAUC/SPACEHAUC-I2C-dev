@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++11 -g -Wall   CMakeFiles/hello_world.dir/src/driver.cpp.o CMakeFiles/hello_world.dir/src/spacehauc-i2c-dev.cpp.o  -o bin/hello_world -rdynamic -lpthread 
