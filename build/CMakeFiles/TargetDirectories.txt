@@ -1,3 +1,0 @@
-/home/david/Hauc/SPACEHAUC-I2C-dev/build/CMakeFiles/rebuild_cache.dir
-/home/david/Hauc/SPACEHAUC-I2C-dev/build/CMakeFiles/edit_cache.dir
-/home/david/Hauc/SPACEHAUC-I2C-dev/build/CMakeFiles/hello_world.dir
