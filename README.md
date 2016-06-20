@@ -5,6 +5,6 @@
 
 ## SPACEHAUC I2C DEV TOOLS ALPHA v0.1.0
 
-This is a library managed by the UMass Lowell SPACE HAUC Command and Data Team. Its various functions should make using I2C in Linux on an Intel Edison much easier. Currently in Alpha release, with support for temperature sensors only. More sensors are planned in the future.
+This is a library managed by the UMass Lowell SPACE HAUC Command and Data Team. Its various functions should make using I2C in Linux on an Intel Edison much easier. Currently in Alpha release, with support for temperature sensors and a magnetometer only. More sensors are planned in the future.
 
 [![LGPL License](http://linux-blog.org/wp-content/uploads/2013/02/LGPL-3-Logo.jpg)](https://www.gnu.org/licenses/lgpl.txt)
