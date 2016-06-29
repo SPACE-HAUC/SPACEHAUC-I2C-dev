@@ -110,5 +110,22 @@ public:
   fTriplet readMagnetometer();
 };
 
+/*!
+ * This is a class for a luminosity sensor.
+ */
+class LuminositySensor : public I2C_Device {
+private:
+  /*! A vector that holds the data register(s) for the sensor. */
+  vector<uint8_t> mDataRegisters;
+  /*! A vector that holds the control registers for the sensor. */
+  vector<uint8_t> mControlRegisters;
+  double mLuminosity;
+public:
+  LuminositySensor(uint8_t bus, uint8_t address, uint8_t ID_register,
+    uint8_t controlRegister1, uint8_t controlRegister2, uint8_t dataRegister);
+  ~LuminositySensor();
+  bool initLuminositySensor();
+  double readLuminositySensor();
+};
 
 #endif  // INCLUDE_SPACEHAUC_I2C_DEV_HPP_
