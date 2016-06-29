@@ -14,8 +14,10 @@ using std::string;
 using std::cerr;
 using std::cout;
 using std::endl;
+
 bool testTemperatureSensor();
 bool testMagnetometer();
+bool testLuminositySensor();
 
 int main(int argc, char* argv[]) {
   cout << "SPACEHAUC I2C Library Driver" << endl;
@@ -27,6 +29,12 @@ int main(int argc, char* argv[]) {
   }
   cout << "Testing Magnetometer..." << endl;
   if (testMagnetometer()) {
+    cout << "Success" << endl;
+  } else {
+    cout << "Failure" << endl;
+  }
+  cout << "Testing Luminosity Sensor..." << endl;
+  if (testLuminositySensor()) {
     cout << "Success" << endl;
   } else {
     cout << "Failure" << endl;
@@ -52,7 +60,7 @@ bool testTemperatureSensor() {
   }
   cout << "Initialized Temperature Sensor" << endl;
   cout << "Reading Temperature data..." << endl;
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; ++i) {
     cout << "Temperature = " << (int) tempSensor.readTemp() << endl;
     usleep(500000);
   }
@@ -79,10 +87,37 @@ bool testMagnetometer() {
   }
   cout << "Initialized Magnetometer" << endl;
   cout << "Reading Magnetic Field Data..." << endl;
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; ++i) {
     fTriplet field = magnetometer.readMagnetometer();
     cout << "x: " << field.x << " y: " << field.y << " z: " << field.z << endl;
     usleep(500000);
+  }
+  return true;
+}
+
+bool testLuminositySensor() {
+  uint8_t bus = 1;
+  uint8_t address = 0x39;
+  uint8_t ID_register = 0x0A;
+  uint8_t ctlRegister1 = 0x00;
+  uint8_t ctlRegister2 = 0x01;
+  uint8_t dataRegister = 0x0C;
+  LuminositySensor light(bus, address, ID_register, ctlRegister1, ctlRegister2,
+    dataRegister);
+  if (light.initDevice() == false) {
+    cerr << "Error: I2C bus failed to open." << endl;
+    return false;
+  }
+  cout << "Opened I2C bus" << endl;
+  if (light.initLuminositySensor() == false) {
+    cerr << "Error: Luminosity Sensor failed to initialize." << endl;
+    return false;
+  }
+  cout << "Initialized Luminosity Sensor" << endl;
+  cout << "Reading light intensity data..." << endl;
+  for (int i = 0; i < 5; ++i) {
+    cout << "Luminosity: " << light.readLuminositySensor() << endl;
+    sleep(1);
   }
   return true;
 }

@@ -125,6 +125,9 @@ TemperatureSensor::TemperatureSensor(uint8_t bus, uint8_t address, uint8_t ID_re
   mDataRegisters.push_back(dataRegister);
 }
 
+/*!
+ * Destructor for a Temperature Sensor.
+ */
 TemperatureSensor::~TemperatureSensor() {}
 
 /*!
@@ -179,8 +182,16 @@ Magnetometer::Magnetometer(uint8_t bus, uint8_t address, uint8_t ID_register,
   mScale = scale;
 }
 
+/*!
+ * Destructor for a Magnetometer.
+ */
 Magnetometer::~Magnetometer() {};
 
+/*!
+ * initMagnetometer() initializes the Magnetometer by enabling the registers
+ *
+ * @return success/failure
+ */
 bool Magnetometer::initMagnetometer() {
   uint8_t scale = (uint8_t) mScale << 5;
   uint8_t input2[2] = {mControlRegisters[1], 0x00};
@@ -196,6 +207,12 @@ bool Magnetometer::initMagnetometer() {
   return true;
 }
 
+/*!
+ * readMagnetometer() reads data from the magnetometer's data register and
+ * converts it into floats.
+ *
+ * @return data The struct of x, y, and z components of the magnetic field
+ */
 fTriplet Magnetometer::readMagnetometer() {
   fTriplet data = {0};
   uint8_t buffer[6] = {0};
@@ -208,4 +225,81 @@ fTriplet Magnetometer::readMagnetometer() {
   /* invert z axis so it's positive down like other sensors */
   data.z = -(data.z )/*- m_bias.z) * m_scale.z */* mMagScaleValue[mScale];
   return data;
+}
+
+/*!
+ * Constructor for a LuminositySensor object.
+ *
+ * @param bus This is the i2c bus that the sensor is connected to
+ * @param address This is the address of the sensor on the bus. See sensor
+ *        datasheet for info
+ * @param ID_register This is the register that identifies the device. See
+ *        sensor datasheet for info
+ * @param controlRegister1 This is the first register that controls the
+ *        sensor. See sensor datasheet for info.
+ * @param controlRegister2 This is the second register that controls the
+ *        sensor. See sensor datasheet for info.
+ * @param dataRegister This is the register that measured magnetic data is
+ *        stored in. See sensor datasheet for info.
+ */
+LuminositySensor::LuminositySensor(uint8_t bus, uint8_t address, uint8_t ID_register, uint8_t controlRegister1, uint8_t controlRegister2, uint8_t dataRegister) {
+  mBus = bus;
+  mAddress.push_back(address);
+  mID_Regsiters.push_back(ID_register);
+  mControlRegisters.push_back(controlRegister1);
+  mControlRegisters.push_back(controlRegister2);
+  mDataRegisters.push_back(dataRegister);
+}
+
+/*!
+ * Destructor for a LuminositySensor object.
+ */
+LuminositySensor::~LuminositySensor() {};
+
+/*!
+ * initLuminositySensor() initializes the Luminosity Sensor by writing 0x03 to
+ * the first control register (turning it on) and writing 0x02 to the second
+ * one, enabling the sensor to read data.
+ *
+ * @return success/failure
+ */
+bool LuminositySensor::initLuminositySensor() {
+  // Select control register(0x00 | 0x80)
+  // Power ON mode(0x03)
+  uint8_t config[2] = {0};
+  config[0] = mControlRegisters[0] | 0x80;
+  config[1] = 0x03;
+  if (!(writeBytes(2, config))) {
+    return false;
+  }
+  // Select timing register(0x01 | 0x80)
+  // Nominal integration time = 402ms(0x02)
+  config[0] = mControlRegisters[1] | 0x80;
+  config[1] = 0x02;
+  if (!(writeBytes(2, config))) {
+    return false;
+  }
+  return true;
+}
+
+/*!
+ * readLuminositySensor() reads data from the Luminosity sensor
+ *
+ * @return The luminosity in lux if data was read, or -1 if data couldn't be.
+ */
+double LuminositySensor::readLuminositySensor() {
+  // Read 4 bytes of data from register(0x0C | 0x80)
+  // ch0 lsb, ch0 msb, ch1 lsb, ch1 msb
+  uint8_t reg = mDataRegisters[0] | 0x80;
+  int err;
+  if (!(err = writeBytes(1, &reg))) {
+    return -1;  // error
+  }
+  uint8_t data[2] = {0};
+  if (!(err = readBytes(mDataRegisters[0], data, 1))) {
+    return -1;  // error
+  }
+  // Convert the data (if 2 bytes read)
+  //return (data[1] * 256 + data[0]);
+  return data[0];
 }
