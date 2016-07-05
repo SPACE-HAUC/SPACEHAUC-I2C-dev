@@ -293,15 +293,16 @@ double LuminositySensor::readLuminositySensor() {
   // Read 4 bytes of data from register(0x0C | 0x80)
   // ch0 lsb, ch0 msb, ch1 lsb, ch1 msb
   uint8_t reg = mDataRegisters[0] | 0x80;
-  int err;
-  if (!(err = writeBytes(1, &reg))) {
+  if (!writeBytes(1, &reg)) {
     return -1;  // error
   }
   uint8_t data[2] = {0};
-  if (!(err = readBytes(mDataRegisters[0], data, 1))) {
+  if (!readBytes(mDataRegisters[0], data, 2)) {
     return -1;  // error
   }
+  /*if (!readBytes(0x0D, &data[1], 1)) {
+    return -1;  // error
+  }*/
   // Convert the data (if 2 bytes read)
-  // return (data[1] * 256 + data[0]);
-  return data[0];
+  return ((data[1]) * 256 + data[0]);
 }
