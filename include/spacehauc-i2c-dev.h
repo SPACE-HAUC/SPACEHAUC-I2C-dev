@@ -58,7 +58,7 @@ class I2C_Device {
   /*! A vector of each of the ID registers that the device may contain. */
   vector<uint8_t> mID_Regsiters;
   int readBytes(uint8_t reg, uint8_t *buffer, uint8_t count);
-  int writeBytes(uint8_t count, uint8_t *input);
+  int writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count);
  public:
   I2C_Device();
   virtual ~I2C_Device();
