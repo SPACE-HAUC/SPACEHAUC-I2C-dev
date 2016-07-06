@@ -1,0 +1,20 @@
+# output files
+*.out
+*.o
+*.gch
+
+# linter files
+*.dat
+*.py
+lineReader
+powerlint
+
+# cmake files
+cmake_install.cmake
+CMakeFiles/
+CMakeCache.txt
+Makefile
+
+#doxygen files
+html
+latex
