@@ -5,8 +5,8 @@
  * 9 June 2015
  * https://github.com/sparkfun/SparkFun_PWM_Block_for_Edison_CPP_Library
  *
- * This file provides all the function, class, and constant definitions 
- * needed to provide robust LED and servo drive support for the PCA9685 PWM IC 
+ * This file provides all the function, class, and constant definitions
+ * needed to provide robust LED and servo drive support for the PCA9685 PWM IC
  * used on SparkFun's PWM Block for Edison.
  *
  * Resources:
@@ -21,7 +21,7 @@
  *
  * This code is beerware; if you see me (or any other SparkFun employee) at the
  * local, and you've found our code helpful, please buy us a round!
- * ****************************************************************************/ 
+ * ****************************************************************************/
 
 #ifndef __pca9685_h__
 #define __pca9685_h__
@@ -31,7 +31,7 @@
 // Let's make a big long hideous list of all the register names and pin names!
 
 #define MODE1         0x00
- #define RESTART       0x80 // Has something to do with sleep mode. I don't 
+ #define RESTART       0x80 // Has something to do with sleep mode. I don't
                             //  really get it.
  #define EXTCLK        0x40 // Write to '1' to disable internal clock. Cannot
                             //  be reset to '0' without power cycle or reset.
@@ -46,15 +46,15 @@
                             //  in ALLCALL register. Defaults to '1'.
 
 #define MODE2         0x01
- #define INVRT         0x10 // Write to '1' to invert output (i.e., a when the
+ #define INVRT         0x10 // Write to register '0x01' to invert output (i.e., a when the
                             //  pin is ON, the output will be low, or the
                             //  open-drain transistor will be off).
  #define OCH           0x08 // '0' (default) is update PWM behavior on I2C STOP
                             // '1' is update on I2C ACK
- #define OUTDRV        0x04 // '0' is open-drain mode, '1' (default) is 
+ #define OUTDRV        0x04 // '0' is open-drain mode, '1' (default) is
                             //  totem-pole drive.
  #define OUTNE1        0x02 // These bits affect behavior when OE is high and
- #define OUTNE0        0x01 //  the outputs are disabled. 
+ #define OUTNE0        0x01 //  the outputs are disabled.
                             // 00 - Output is '0'
                             // 01 - Output is '1' in totem-pole mode
                             //      Output is Hi-z in open drain mode
@@ -68,10 +68,10 @@
 
 #define SUBADR2       0x03
 
-#define SUBADR3       0x04 
+#define SUBADR3       0x04
 
 // This register powers up with a value of 0xE0, allowing the user to access
-// *all* PCA9685 devices on the bus by writing to address 0x70. This function 
+// *all* PCA9685 devices on the bus by writing to address 0x70. This function
 // is enabled by default, but can be disabled by clearing the ALLCALL bit in
 // MODE1.
 #define ALLCALLADR    0x05
@@ -79,7 +79,7 @@
 // Each channel has two 12-bit registers associated with it: ON and OFF. The
 // PCA9685 has an internal 12-bit register which counts from 0-4095 and then
 // overflows. When the ON register matches that counter, the pin asserts. When
-// the OFF register matches, the pin de-asserts. 
+// the OFF register matches, the pin de-asserts.
 #define LED0_ON_L     0x06
 #define LED0_ON_H     0x07
 #define LED0_OFF_L    0x08
@@ -158,7 +158,7 @@
 //  PRE_SCALE = ((f_clk)/(4096*f_pwm))-1
 // Of course, only positive integers are allowed, and futhermore, a minimum
 // value of 3 is enforced on the value in this register.
-// f_clk is, by default, 25MHz; external clocks can be applied. 
+// f_clk is, by default, 25MHz; external clocks can be applied.
 #define PRE_SCALE     0xfe
 
 
@@ -176,13 +176,13 @@
 #define MIN_WIDTH 200
 #define MAX_WIDTH 450
 
-// Let's make a class! 
+// Let's make a class!
 
 class pca9685
 {
   public:
     // Constructor and destructor
-    pca9685(mraa::I2c* pca_port, uint8_t myI2CAddress); // 
+    pca9685(mraa::I2c* pca_port, uint8_t myI2CAddress); //
     ~pca9685(){}; //
 
     // LED Mode stuff: "LED mode" means open drain, negative width pulses.
@@ -191,20 +191,6 @@ class pca9685
     // Maps raw percentages (0-100) to weighted PWM pulse widths that will
     //  look to a viewer more or less like the percentage.
     float setChlLEDPercent(uint8_t channel, uint8_t percent);
-
-    // Servo mode stuff: "Servo mode" means open drain (there's a pull-up!),
-    //  Positive pulses, 50Hz signals.
-    void enableServoMode();
-    // Set an angle. By default, this is from 0-180, and the resulting pulses
-    //  are from ~900us (200 counts) to ~2000us (450 counts).
-    void setChlAngle(uint8_t channel, int16_t angle);
-    // Get/set functions for the minimum and maximum values of both angle and
-    //  pulse width. This allows the user to tune the range of motion for their
-    //  particular servo model as well as for their particular application.
-    void setServoAnglePulseLimits(uint16_t minServoPL, uint16_t maxServoPL);
-    void getServoAnglePulseLimits(uint16_t* minServoPL, uint16_t* maxServoPL);
-    void setServoAngleLimits(int16_t minAngle, int16_t maxAngle);
-    void getServoAngleLimits(int16_t* minAngle, int16_t* maxAngle);
 
     // Set/read for the mode registers. Returns mode2 as MSB and mode1 as LSB.
     //  Sets mode2 with MSB and mode1 with LSB.
@@ -251,4 +237,3 @@ class pca9685
 };
 
 #endif
-

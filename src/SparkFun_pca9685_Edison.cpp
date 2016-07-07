@@ -20,7 +20,7 @@
  *
  * This code is beerware; if you see me (or any other SparkFun employee) at the
  * local, and you've found our code helpful, please buy us a round!
- * ****************************************************************************/ 
+ * ****************************************************************************/
 
 #include "SparkFun_pca9685_Edison.h"
 #include "mraa.hpp"
@@ -93,7 +93,7 @@ void pca9685::setChlStart(uint8_t channel, uint16_t start)
 {
   uint16_t offTime, onTime;
   channelRead(channel, &onTime, &offTime);
-  channelWrite(channel, start, offTime); 
+  channelWrite(channel, start, offTime);
 }
 
 // Same as previous, for stop time.
@@ -101,7 +101,7 @@ void pca9685::setChlStop(uint8_t channel, uint16_t stop)
 {
   uint16_t offTime, onTime;
   channelRead(channel, &onTime, &offTime);
-  channelWrite(channel, onTime, stop); 
+  channelWrite(channel, onTime, stop);
 }
 
 // Get the current start/stop values from the device.
@@ -121,7 +121,7 @@ void pca9685::setModeRegisters(uint16_t modeRegisterValue)
 uint16_t pca9685::readModeRegisters()
 {
   uint16_t modeReg = _pca_port->readReg(MODE1);
-  modeReg |= _pca_port->readReg(MODE2)<<8;
+  modeReg |= _pca_port->readReg(MODE2) << 8;
   return modeReg;
 }
 
@@ -130,7 +130,7 @@ uint16_t pca9685::readModeRegisters()
 void pca9685::setPrescaler(unsigned char prescaler)
 {
   uint8_t modeReg;
-  
+
   // Set the SLEEP bit, which stops the oscillator on the part.
   modeReg = _pca_port->readReg(MODE1);
   modeReg |= SLEEP;
@@ -160,19 +160,14 @@ void pca9685::setPrescaler(unsigned char prescaler)
 //  more information on exactly what the prescaler number means.
 uint8_t pca9685::getPrescaler()
 {
-  
+
   return _pca_port->readReg(PRE_SCALE);
 }
 
 // set/get frequency functions are private because they don't work exactly as
 //  a user might expect. The resulting values are really coarse, so e.g. 400 Hz
 //  and 450 Hz are probably going to have the same prescaler.
-float pca9685::setFreq(float freq)
-{
-  uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
-  setPrescaler(prescaler);
-  return prescaler;
-}
+
 
 float pca9685::getFreq()
 {
@@ -268,4 +263,3 @@ void pca9685::setChlAngle(uint8_t channel, int16_t angle)
   uint16_t pulseLen = (angle-_minAngle)*(_maxServoPL-_minServoPL)/(_maxAngle-_minAngle) + _minServoPL;
   setChlTime(channel, 0, pulseLen);
 }
-

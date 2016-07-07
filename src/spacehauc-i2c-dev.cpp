@@ -300,9 +300,48 @@ double LuminositySensor::readLuminositySensor() {
   if (!readBytes(mDataRegisters[0], data, 2)) {
     return -1;  // error
   }
-  /*if (!readBytes(0x0D, &data[1], 1)) {
-    return -1;  // error
-  }*/
-  // Convert the data (if 2 bytes read)
+  // Convert the data
   return ((data[1]) * 256 + data[0]);
 }
+
+PWMcontroller(int file, uint8_t address, uint8_t ID_register,
+  uint8_t controlRegister1, uint8_t controlRegister2) {
+    mFile = file;
+    mAddress.push_back(address);
+    mID_Regsiters.push_back(ID_register);
+    mControlRegisters.pushback(controlRegister1);
+    mControlRegisters.pushback(controlRegister2);
+  }
+
+ bool initPWMcontroller() {
+   setFreq(400);
+ }
+
+bool setFreq(float freq) {
+   uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
+   uint8_t modeReg;
+   // Set the SLEEP bit, which stops the oscillator on the part.
+   readBytes(0x00,&modeReg,1)
+   modeReg |= 0x10; // changes 5th bit to 1 to enable sleep
+   writeBytes(0x00, &modeReg, 1);
+
+   // This register can only be written when the oscillator is stopped.
+   writeBytes(0xfe, prescaler, 1);
+
+   // Clear the sleep bit.
+   readBytes(0x00, &modeReg, 1);
+   modeReg &= ~(SLEEP);
+   writeBytes(0x00, &modeReg, 1);
+
+   usleep(500); // According to the datasheet, we must wait 500us before
+                //  we touch the RESTART bit after touching the SLEEP bit.
+                //  *Maybe* we can count on that much time elapsing in the
+                //  I2C transaction, but let's be on the safe side.
+
+   // Set the RESTART bit which, counterintuitively, clears the actual RESTART
+   //  bit in the register.
+   readBytes(0x00, &modeReg, 1)
+   modeReg |= RESTART;
+   writeBytes(0x00, &modeReg, 1)
+   return true;
+ }
