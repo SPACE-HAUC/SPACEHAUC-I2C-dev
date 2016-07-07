@@ -88,7 +88,7 @@ int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
  * @return success/failure
  */
 int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
-  vector<uint8_t> temp;
+  vector<uint8_t> input;
   input.push_back(reg);
   for (int i = 0; i < count; ++i) {
     input.push_back(buffer[i]);
@@ -273,7 +273,7 @@ bool LuminositySensor::initLuminositySensor() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
   uint8_t *data;
-  *data = 0x03
+  *data = 0x03;
   if (!(writeBytes(mControlRegisters[0] | 0x80, data, 2))) {
     return false;
   }
