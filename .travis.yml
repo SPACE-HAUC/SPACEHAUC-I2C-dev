@@ -4,6 +4,10 @@ dist: trusty
 
 # Enable C++ support
 language: cpp
+# Get dependencies
+before_update:
+   - sudo apt update -qy
+   - sudo apt install i2c-tools -qy
 # Compiler selection
 compiler:
   - clang
