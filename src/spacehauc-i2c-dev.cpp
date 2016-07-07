@@ -98,7 +98,7 @@ int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
 
   messages[0].addr  = mAddress[0];
   messages[0].flags = 0;
-  messages[0].len   = count;
+  messages[0].len   = count + 1;
   messages[0].buf   = &input[0];
 
   packets.msgs      = messages;
@@ -143,7 +143,7 @@ TemperatureSensor::~TemperatureSensor() {}
  */
 bool TemperatureSensor::initTempSensor() {
   uint8_t data = 0x98;
-  if (!writeBytes(mControlRegisters[0], &data, 2)) {
+  if (!writeBytes(mControlRegisters[0], &data, 1)) {
     return false;
   }
   return true;
@@ -201,11 +201,11 @@ bool Magnetometer::initMagnetometer() {
   uint8_t scale = (uint8_t) mScale << 5;
   // all other bits 0
   uint8_t data = 0x00;
-  if (!writeBytes(mControlRegisters[1], &data, 2)) {
+  if (!writeBytes(mControlRegisters[1], &data, 1)) {
     return false;
   }
   // continuous conversion mode
-  if (!writeBytes(mControlRegisters[1], &scale, 2)) {
+  if (!writeBytes(mControlRegisters[1], &scale, 1)) {
     return false;
   }
   return true;
@@ -274,13 +274,13 @@ bool LuminositySensor::initLuminositySensor() {
   // Power ON mode(0x03)
   uint8_t *data;
   *data = 0x03;
-  if (!(writeBytes(mControlRegisters[0] | 0x80, data, 2))) {
+  if (!(writeBytes(mControlRegisters[0] | 0x80, data, 1))) {
     return false;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
   *data = 0x02;
-  if (!(writeBytes(mControlRegisters[1] | 0x80, data, 2))) {
+  if (!(writeBytes(mControlRegisters[1] | 0x80, data, 1))) {
     return false;
   }
   return true;
