@@ -19,6 +19,11 @@ using std::endl;
 bool testTemperatureSensor(int file);
 bool testMagnetometer(int file);
 bool testLuminositySensor(int file);
+bool testRGB(int file);
+
+const int RED = 2;
+const int GREEN = 3;
+const int BLUE = 4;
 
 int main(int argc, char* argv[]) {
   cout << "SPACEHAUC I2C Library Driver" << endl;
@@ -46,7 +51,7 @@ int main(int argc, char* argv[]) {
   } else {
     cout << "Failure" << endl;
   }
-  testRGB();
+  testRGB(file);
   return 0;
 }
 
@@ -113,13 +118,47 @@ bool testLuminositySensor(int file) {
   return true;
 }
 
-bool testRGB() {
+bool testRGB(int file) {
   PWMcontroller rgb(file,0x40,1,1,1);
   rgb.initRGB_PWMcontroller();
-  for (uint8_t i = 0; i<100; ++i) {
-    pwm.setChlLEDPercent(BLUE, i);
-    pwm.setChlLEDPercent(GREEN, i);
-    pwm.setChlLEDPercent(RED, i);
-    msleep(100);
-  }
+  cout << "red!" << endl;
+  rgb.setChlLEDPercent(BLUE, 100);
+  rgb.setChlLEDPercent(GREEN, 100);
+  rgb.setChlLEDPercent(RED, 0);
+  sleep(2);
+  cout << "orange!" << endl;
+  rgb.setChlLEDPercent(BLUE, 100);
+  rgb.setChlLEDPercent(GREEN, 25);
+  rgb.setChlLEDPercent(RED, 0);
+  sleep(2);
+  cout << "yellow!" << endl;
+  rgb.setChlLEDPercent(BLUE, 100);
+  rgb.setChlLEDPercent(GREEN, 50);
+  rgb.setChlLEDPercent(RED, 0);
+  sleep(2);
+  cout << "green!" << endl;
+  rgb.setChlLEDPercent(BLUE, 100);
+  rgb.setChlLEDPercent(GREEN, 0);
+  rgb.setChlLEDPercent(RED, 100);
+  sleep(2);
+  cout << "cyan!" << endl;
+  rgb.setChlLEDPercent(BLUE, 0);
+  rgb.setChlLEDPercent(GREEN, 0);
+  rgb.setChlLEDPercent(RED, 100);
+  sleep(2);
+  cout << "blue!" << endl;
+  rgb.setChlLEDPercent(BLUE, 0);
+  rgb.setChlLEDPercent(GREEN, 100);
+  rgb.setChlLEDPercent(RED, 100);
+  sleep(2);
+  cout << "purple!" << endl;
+  rgb.setChlLEDPercent(BLUE, 0);
+  rgb.setChlLEDPercent(GREEN, 100);
+  rgb.setChlLEDPercent(RED, 50);
+  sleep(2);
+  cout << "off!" << endl;
+  rgb.setChlLEDPercent(BLUE, 100);
+  rgb.setChlLEDPercent(GREEN, 100);
+  rgb.setChlLEDPercent(RED, 100);
+  return 0;
 }

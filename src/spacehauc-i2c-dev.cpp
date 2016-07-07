@@ -9,10 +9,15 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
+#include <math.h>
+#include <unistd.h>
 #include <string>
 #include <vector>
 
+#include <iostream>
 using std::string;
+using std::cout;
+using std::endl;
 
 /*!
  * initBus attempts to enable the i2c bus number that is passed to it. This bus
@@ -272,15 +277,14 @@ LuminositySensor::~LuminositySensor() {}
 bool LuminositySensor::initLuminositySensor() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
-  uint8_t *data;
-  *data = 0x03;
-  if (!(writeBytes(mControlRegisters[0] | 0x80, data, 1))) {
+  uint8_t data = 0x03;
+  if (!(writeBytes(mControlRegisters[0] | 0x80, &data, 1))) {
     return false;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
-  *data = 0x02;
-  if (!(writeBytes(mControlRegisters[1] | 0x80, data, 1))) {
+  data = 0x02;
+  if (!(writeBytes(mControlRegisters[1] | 0x80, &data, 1))) {
     return false;
   }
   return true;
@@ -306,23 +310,23 @@ double LuminositySensor::readLuminositySensor() {
   return ((data[1]) * 256 + data[0]);
 }
 
-PWMcontroller(int file, uint8_t address, uint8_t ID_register,
+PWMcontroller::PWMcontroller(int file, uint8_t address, uint8_t ID_register,
   uint8_t controlRegister1, uint8_t controlRegister2) {
     mFile = file;
     mAddress.push_back(address);
     mID_Regsiters.push_back(ID_register);
-    mControlRegisters.pushback(controlRegister1);
-    mControlRegisters.pushback(controlRegister2);
+    mControlRegisters.push_back(controlRegister1);
+    mControlRegisters.push_back(controlRegister2);
   }
 
   PWMcontroller::~PWMcontroller() {}
 
  bool PWMcontroller::initRGB_PWMcontroller() {
    setFreq(400);
-   uint8_t mode2RegVal;
-   readBytes(0x01, &mode2RegVal, 1);
-   mode2RegVal |= INVRT;
-   writeBytes(0x01, &mode2RegVal, 1);
+   //uint8_t mode2RegVal;
+   //cout << readBytes(0x01, &mode2RegVal, 1) << "   rb 328" << endl;
+   //mode2RegVal |= 0x10;
+   //cout << writeBytes(0x01, &mode2RegVal, 1) << "   wb 330" << endl;
    return true;
  }
 
@@ -330,16 +334,16 @@ bool PWMcontroller::setFreq(float freq) {
    uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
    uint8_t modeReg;
    // Set the SLEEP bit, which stops the oscillator on the part.
-   readBytes(0x00,&modeReg,1)
+   readBytes(0x00,&modeReg,1);
    modeReg |= 0x10; // changes 5th bit to 1 to enable sleep
    writeBytes(0x00, &modeReg, 1);
 
    // This register can only be written when the oscillator is stopped.
-   writeBytes(0xfe, prescaler, 1);
+   writeBytes(0xfe, &prescaler, 1);
 
    // Clear the sleep bit.
    readBytes(0x00, &modeReg, 1);
-   modeReg &= ~(SLEEP);
+   modeReg &= ~(0x10);
    writeBytes(0x00, &modeReg, 1);
 
    usleep(500); // According to the datasheet, we must wait 500us before
@@ -349,24 +353,26 @@ bool PWMcontroller::setFreq(float freq) {
 
    // Set the RESTART bit which, counterintuitively, clears the actual RESTART
    //  bit in the register.
-   readBytes(0x00, &modeReg, 1)
-   modeReg |= RESTART;
-   writeBytes(0x00, &modeReg, 1)
+   readBytes(0x00, &modeReg, 1);
+   modeReg |= 0x80;
+   writeBytes(0x00, &modeReg, 1);
    return true;
  }
 
- void PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off)
- {
-   uint8_t offShift = off >> 8;
-   uint8_t onShift = on >> 8;
+ void PWMcontroller::channelWrite(uint8_t channel, uint16_t *on, uint16_t *off)
+{
+   uint8_t offHigh = *off >> 8;
+   uint8_t onHigh = *on >> 8;
+   uint8_t onLow = *on;
+   uint8_t offLow = *off;
    uint8_t onL = 0x06 + (channel*4);
    uint8_t onH = onL + 1;
    uint8_t offL = onL + 2;
    uint8_t offH = onL + 3;
-   writeBytes(onL, on, 1);
-   writeBytes(onH, onShift, 1);
-   writeBytes(offL, off, 1);
-   writeBytes(offH, offShift, 1);
+   writeBytes(onL, &onLow, 1);
+   writeBytes(onH, &onHigh, 1);
+   writeBytes(offL, &offLow, 1);
+   writeBytes(offH, &offHigh, 1);
  }
 
  float PWMcontroller::setChlLEDPercent(uint8_t channel, uint8_t percent) {
@@ -384,5 +390,5 @@ bool PWMcontroller::setFreq(float freq) {
  void PWMcontroller::setChlDuty(uint8_t channel, float duty) {
    uint16_t onTime = 0;
    uint16_t offTime = uint16_t(duty*4096*.01)-1;
-   channelWrite(channel, onTime, offTime);
+   channelWrite(channel, &onTime, &offTime);
 }
