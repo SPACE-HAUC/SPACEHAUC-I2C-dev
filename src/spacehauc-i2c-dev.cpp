@@ -315,11 +315,18 @@ PWMcontroller(int file, uint8_t address, uint8_t ID_register,
     mControlRegisters.pushback(controlRegister2);
   }
 
- bool initPWMcontroller() {
+  PWMcontroller::~PWMcontroller() {}
+
+ bool PWMcontroller::initRGB_PWMcontroller() {
    setFreq(400);
+   uint8_t mode2RegVal;
+   readBytes(0x01, &mode2RegVal, 1);
+   mode2RegVal |= INVRT;
+   writeBytes(0x01, &mode2RegVal, 1);
+   return true;
  }
 
-bool setFreq(float freq) {
+bool PWMcontroller::setFreq(float freq) {
    uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
    uint8_t modeReg;
    // Set the SLEEP bit, which stops the oscillator on the part.
@@ -347,3 +354,35 @@ bool setFreq(float freq) {
    writeBytes(0x00, &modeReg, 1)
    return true;
  }
+
+ void PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off)
+ {
+   uint8_t offShift = off >> 8;
+   uint8_t onShift = on >> 8;
+   uint8_t onL = 0x06 + (channel*4);
+   uint8_t onH = onL + 1;
+   uint8_t offL = onL + 2;
+   uint8_t offH = onL + 3;
+   writeBytes(onL, on, 1);
+   writeBytes(onH, onShift, 1);
+   writeBytes(offL, off, 1);
+   writeBytes(offH, offShift, 1);
+ }
+
+ float PWMcontroller::setChlLEDPercent(uint8_t channel, uint8_t percent) {
+   float weighted;
+   if (percent != 100) {
+     percent = 100 - percent;
+     weighted = 1-(log10(percent)/2);
+   } else {
+     weighted = 1;
+   }
+   setChlDuty(channel, weighted*100);
+   return weighted*100;
+ }
+
+ void PWMcontroller::setChlDuty(uint8_t channel, float duty) {
+   uint16_t onTime = 0;
+   uint16_t offTime = uint16_t(duty*4096*.01)-1;
+   channelWrite(channel, onTime, offTime);
+}

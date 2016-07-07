@@ -128,14 +128,22 @@ class LuminositySensor : public I2C_Device {
 
 class PWMcontroller : public I2C_Device {
  private:
+
    /*! A vector that holds the control registers for the sensor. */
    vector<uint8_t> mControlRegisters;
+   bool setFreq(float freq);
+   const int RED = 2;
+   const int GREEN = 3;
+   const int BLUE = 4;
  public:
    PWMcontroller(int file, uint8_t address, uint8_t ID_register,
      uint8_t controlRegister1, uint8_t controlRegister2, uint8_t dataRegister);
    ~PWMcontroller();
-   bool initPWMcontroller();
-   bool sendPWMcommand();
+   bool initRGB_PWMcontroller();
+   bool setFreq(float freq);
+   void channelWrite(uint8_t channel, uint16_t on, uint16_t off);
+   float setChlLEDPercent(uint8_t channel, uint8_t percent);
+   void setChlDuty(uint8_t channel, float duty);
 }
 
 #endif  // INCLUDE_SPACEHAUC_I2C_DEV_H_

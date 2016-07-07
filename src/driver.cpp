@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
   } else {
     cout << "Failure" << endl;
   }
+  testRGB();
   return 0;
 }
 
@@ -110,4 +111,15 @@ bool testLuminositySensor(int file) {
     sleep(1);
   }
   return true;
+}
+
+bool testRGB() {
+  PWMcontroller rgb(file,0x40,1,1,1);
+  rgb.initRGB_PWMcontroller();
+  for (uint8_t i = 0; i<100; ++i) {
+    pwm.setChlLEDPercent(BLUE, i);
+    pwm.setChlLEDPercent(GREEN, i);
+    pwm.setChlLEDPercent(RED, i);
+    msleep(100);
+  }
 }
