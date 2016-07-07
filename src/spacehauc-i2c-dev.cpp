@@ -81,20 +81,25 @@ int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
  * i2c_rdwr_ioctl_data and i2c_msg structs to include parameter data. Then it
  * calls the ioctl() function to write the data.
  *
+ * @param reg The register to write to.
+ * @param *buffer A pointer to an array of input data.
  * @param count The number of elements in the input.
- * @param *input A pointer to an array of input data.
  *
  * @return success/failure
  */
-int I2C_Device::writeBytes(uint8_t count, uint8_t *input) {
+int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
+  vector<uint8_t> input;
+  input.push_back(reg);
+  for (int i = 0; i < count; ++i) {
+    input.push_back(buffer[i]);
+  }
   struct i2c_rdwr_ioctl_data packets;
   struct i2c_msg messages[1];
 
   messages[0].addr  = mAddress[0];
   messages[0].flags = 0;
-  messages[0].len   = count;
-  messages[0].buf   = input;  // needs to be an array w/ first being register
-    // and second being data
+  messages[0].len   = count + 1;
+  messages[0].buf   = &input[0];
 
   packets.msgs      = messages;
   packets.nmsgs     = 1;
@@ -137,11 +142,11 @@ TemperatureSensor::~TemperatureSensor() {}
  * @return  success/failure
  */
 bool TemperatureSensor::initTempSensor() {
-  uint8_t input[2] = {mControlRegisters[0], 0x98};
-  if (writeBytes(2, input)) {
-    return true;
+  uint8_t data = 0x98;
+  if (!writeBytes(mControlRegisters[0], &data, 1)) {
+    return false;
   }
-  return false;
+  return true;
 }
 
 /*!
@@ -194,14 +199,13 @@ Magnetometer::~Magnetometer() {}
  */
 bool Magnetometer::initMagnetometer() {
   uint8_t scale = (uint8_t) mScale << 5;
-  uint8_t input2[2] = {mControlRegisters[1], 0x00};
-  uint8_t input1[2] = {mControlRegisters[1], scale};
   // all other bits 0
-  if (!writeBytes(2, input1)) {
+  uint8_t data = 0x00;
+  if (!writeBytes(mControlRegisters[1], &data, 1)) {
     return false;
   }
   // continuous conversion mode
-  if (!writeBytes(2, input2)) {
+  if (!writeBytes(mControlRegisters[1], &scale, 1)) {
     return false;
   }
   return true;
@@ -268,17 +272,15 @@ LuminositySensor::~LuminositySensor() {}
 bool LuminositySensor::initLuminositySensor() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
-  uint8_t config[2] = {0};
-  config[0] = mControlRegisters[0] | 0x80;
-  config[1] = 0x03;
-  if (!(writeBytes(2, config))) {
+  uint8_t *data;
+  *data = 0x03;
+  if (!(writeBytes(mControlRegisters[0] | 0x80, data, 1))) {
     return false;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
-  config[0] = mControlRegisters[1] | 0x80;
-  config[1] = 0x02;
-  if (!(writeBytes(2, config))) {
+  *data = 0x02;
+  if (!(writeBytes(mControlRegisters[1] | 0x80, data, 1))) {
     return false;
   }
   return true;
@@ -292,8 +294,8 @@ bool LuminositySensor::initLuminositySensor() {
 double LuminositySensor::readLuminositySensor() {
   // Read 4 bytes of data from register(0x0C | 0x80)
   // ch0 lsb, ch0 msb, ch1 lsb, ch1 msb
-  uint8_t reg = mDataRegisters[0] | 0x80;
-  if (!writeBytes(1, &reg)) {
+  uint8_t input = 0;
+  if (!writeBytes(mDataRegisters[0] | 0x80, &input, 1)) {
     return -1;  // error
   }
   uint8_t data[2] = {0};

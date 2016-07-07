@@ -33,5 +33,8 @@ Once the sensor is initialized, all that’s left to do is read from it. For the
 data = tempSensor.readTemp();
 std::cout << data;
 ```
+*If you notice a problem with the initMagnetometer function, this may be due to the fact that the same register is written to twice.*
+
+
 
 [![LGPL License](http://linux-blog.org/wp-content/uploads/2013/02/LGPL-3-Logo.jpg)](https://www.gnu.org/licenses/lgpl.txt)
