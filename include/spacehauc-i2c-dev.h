@@ -11,6 +11,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
+//#include <cmath>
 #include <string>
 #include <vector>
 
@@ -124,6 +125,24 @@ class LuminositySensor : public I2C_Device {
   ~LuminositySensor();
   bool initLuminositySensor();
   double readLuminositySensor();
+};
+
+class PWMcontroller : public I2C_Device {
+ private:
+   /*! A vector that holds the control registers for the sensor. */
+   vector<uint8_t> mControlRegisters;
+ public:
+   PWMcontroller(int file, uint8_t address, uint8_t ID_register,
+     uint8_t controlRegister1, uint8_t controlRegister2);
+   ~PWMcontroller();
+   bool initRGB_PWMcontroller();
+   bool setFreq(float freq);
+   bool channelWrite(uint8_t channel, uint16_t on, uint16_t off);
+   bool setChlLEDPercent(uint8_t channel, uint8_t percent);
+   bool setChlDuty(uint8_t channel, float duty);
+   const int RED = 2;
+   const int GREEN = 3;
+   const int BLUE = 4;
 };
 
 #endif  // INCLUDE_SPACEHAUC_I2C_DEV_H_

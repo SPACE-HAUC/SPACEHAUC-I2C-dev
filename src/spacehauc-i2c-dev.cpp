@@ -9,10 +9,15 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
+#include <cmath>
+#include <unistd.h>
 #include <string>
 #include <vector>
 
+#include <iostream>
 using std::string;
+using std::cout;
+using std::endl;
 
 /*!
  * initBus attempts to enable the i2c bus number that is passed to it. This bus
@@ -272,15 +277,14 @@ LuminositySensor::~LuminositySensor() {}
 bool LuminositySensor::initLuminositySensor() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
-  uint8_t *data;
-  *data = 0x03;
-  if (!(writeBytes(mControlRegisters[0] | 0x80, data, 1))) {
+  uint8_t data = 0x03;
+  if (!(writeBytes(mControlRegisters[0] | 0x80, &data, 1))) {
     return false;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
-  *data = 0x02;
-  if (!(writeBytes(mControlRegisters[1] | 0x80, data, 1))) {
+  data = 0x02;
+  if (!(writeBytes(mControlRegisters[1] | 0x80, &data, 1))) {
     return false;
   }
   return true;
@@ -302,9 +306,169 @@ double LuminositySensor::readLuminositySensor() {
   if (!readBytes(mDataRegisters[0], data, 2)) {
     return -1;  // error
   }
-  /*if (!readBytes(0x0D, &data[1], 1)) {
-    return -1;  // error
-  }*/
-  // Convert the data (if 2 bytes read)
+  // Convert the data
   return ((data[1]) * 256 + data[0]);
+}
+
+/*!
+* Constructor for a PWMcontroller object.
+*
+* @param file This is the i2c bus file that the sensor is connected to.
+* @param address This is the address of the PWMboard on the bus. See sensor
+*        datasheet for info.
+* @param ID_register This is the register that identifies the device. See
+*        sensor datasheet for info.
+* @param controlRegister1 This is the first register that controls the
+*        sensor. See sensor datasheet for info.
+* @param controlRegister2 This is the second register that controls the
+*        sensor. See sensor datasheet for info.
+*/
+PWMcontroller::PWMcontroller(int file, uint8_t address, uint8_t ID_register,
+  uint8_t controlRegister1, uint8_t controlRegister2) {
+    mFile = file;
+    mAddress.push_back(address);
+    mID_Regsiters.push_back(ID_register);
+    mControlRegisters.push_back(controlRegister1);
+    mControlRegisters.push_back(controlRegister2);
+  }
+
+  PWMcontroller::~PWMcontroller() {}
+
+/*!
+ * initRGB_PWMcontroller() sets up the PWMcontroller to output to an RGB
+ *
+ * @return Returns true/false depending on success/failure.
+ */
+ bool PWMcontroller::initRGB_PWMcontroller() {
+   if (!setFreq(400)) {
+     return false;
+   }
+   //invert direction of current flow
+   //uint8_t mode2RegVal;
+   //cout << readBytes(0x01, &mode2RegVal, 1) << "   rb 328" << endl;
+   //mode2RegVal |= 0x10;
+   //cout << writeBytes(0x01, &mode2RegVal, 1) << "   wb 330" << endl;
+   return true;
+ }
+
+/*!
+ * setFreq() sets up the PWMcontroller to output to an RGB
+ *
+ * @param freq the desired frequency (in Hz) that the PWMcontroller will be
+ *   set to
+ *
+ * @return Returns true/false depending on success/failure.
+ */
+bool PWMcontroller::setFreq(float freq) {
+   uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
+   uint8_t modeReg;
+   // Set the SLEEP bit, which stops the oscillator on the part.
+   if (!readBytes(0x00,&modeReg,1)) {
+     return false;
+   }
+   modeReg |= 0x10; // changes 5th bit to 1 to enable sleep
+   if (!writeBytes(0x00, &modeReg, 1)){
+     return false;
+   }
+
+   // This register can only be written when the oscillator is stopped.
+   if (!writeBytes(0xfe, &prescaler, 1)) {
+     return false;
+   }
+
+   // Clear the sleep bit.
+   if (!readBytes(0x00, &modeReg, 1)) {
+     return false;
+   }
+   modeReg &= ~(0x10);
+   if (!writeBytes(0x00, &modeReg, 1)) {
+     return false;
+   }
+
+   usleep(500); // According to the datasheet, we must wait 500us before
+                //  we touch the RESTART bit after touching the SLEEP bit.
+                //  *Maybe* we can count on that much time elapsing in the
+                //  I2C transaction, but let's be on the safe side.
+
+   // Set the RESTART bit which, counterintuitively, clears the actual RESTART
+   //  bit in the register.
+   if (!readBytes(0x00, &modeReg, 1)) {
+     return false;
+   }
+   modeReg |= 0x80;
+   if (!writeBytes(0x00, &modeReg, 1)) {
+     return false;
+   }
+   return true;
+ }
+
+/*!
+ * channelWrite() This function actually does the hardware interaction, setting
+ * the up/down duty cycle of each PWM channel.
+ *
+ * @param channel the channel whose value will be set.
+ * @param on The two bits written to the on time registers
+ * @param off The two bits written to the off time registers
+ *
+ * @return Returns true/false depending on success/failure.
+ */
+bool PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off) {
+   uint8_t offHigh = off >> 8;
+   uint8_t onHigh = on >> 8;
+   uint8_t onLow = on;
+   uint8_t offLow = off;
+   uint8_t onL = 0x06 + (channel*4);
+   uint8_t onH = onL + 1;
+   uint8_t offL = onL + 2;
+   uint8_t offH = onL + 3;
+   if (!writeBytes(onL, &onLow, 1)) {
+     return false;
+   } else if (!writeBytes(onH, &onHigh, 1)) {
+     return false;
+   } else if (!writeBytes(offL, &offLow, 1)) {
+     return false;
+   } else if (!writeBytes(offH, &offHigh, 1)) {
+     return false;
+   }
+   return true;
+ }
+
+/*!
+ * setChlLEDPercent() sets the percent duty cycle of a PWM channel
+ *
+ * @param channel the channel being modified
+ * @param percent the percent duty cycle
+ *
+ * @return Returns true/false depending on success/failure.
+ */
+ bool PWMcontroller::setChlLEDPercent(uint8_t channel, uint8_t percent) {
+   //percent = 100 - percent;
+   float weighted;
+   if (percent != 100) {
+     percent = 100 - percent;
+     weighted = 1-(log10(percent)/2);
+   } else {
+     weighted = 1;
+   }
+   if (!setChlDuty(channel, weighted*100)) {
+     return false;
+   }
+   return true;
+ }
+
+/*!
+ * setChlDuty() sets the duty cycle to the given percentage.
+ *
+ * @param channel The channel to set the duty of.
+ * @param duty The percentage duty cycle to set.
+ *
+ * @return Returns true/false depending on success/failure.
+ */
+bool PWMcontroller::setChlDuty(uint8_t channel, float duty) {
+   uint16_t onTime = 0;
+   uint16_t offTime = uint16_t(duty*4096*.01)-1;
+   if (!channelWrite(channel, onTime, offTime)) {
+     return false;
+   }
+   return true;
 }

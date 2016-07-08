@@ -19,6 +19,12 @@ using std::endl;
 bool testTemperatureSensor(int file);
 bool testMagnetometer(int file);
 bool testLuminositySensor(int file);
+bool testRGB(int file);
+bool setRGBColor(PWMcontroller *rgb, int red, int green, int blue);
+
+const int RED = 2;
+const int GREEN = 3;
+const int BLUE = 4;
 
 int main(int argc, char* argv[]) {
   cout << "SPACEHAUC I2C Library Driver" << endl;
@@ -42,6 +48,12 @@ int main(int argc, char* argv[]) {
   }
   cout << "Testing Luminosity Sensor..." << endl;
   if (testLuminositySensor(file)) {
+    cout << "Success" << endl;
+  } else {
+    cout << "Failure" << endl;
+  }
+  cout << "Testing RGB functionality of PWM Board..." << endl;
+  if (testRGB(file)) {
     cout << "Success" << endl;
   } else {
     cout << "Failure" << endl;
@@ -108,6 +120,80 @@ bool testLuminositySensor(int file) {
   for (int i = 0; i < 5; ++i) {
     cout << "Luminosity: " << light.readLuminositySensor() << endl;
     sleep(1);
+  }
+  return true;
+}
+
+bool testRGB(int file) {
+  uint8_t address = 0x40;
+  uint8_t ID_register = 1;  // We do not know what the actual register is, but
+  // it doesn't matter for now because currently id registers are not used.
+  uint8_t ctlRegister1 = 0x00;
+  uint8_t ctlRegister2 = 0x01;
+  PWMcontroller rgb(file, address, ID_register, ctlRegister1, ctlRegister2);
+  if (!rgb.initRGB_PWMcontroller()) {
+    cerr << "Error: RGB PWM controller failed to initialize" << endl;
+    return false;
+  }
+  cout << "red!" << endl;
+  if (!setRGBColor(&rgb, 100, 0, 0)) {
+    cerr << "Error: Red color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "orange!" << endl;
+  if (!setRGBColor(&rgb, 100, 25, 0)) {
+    cerr << "Error: Orange color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "yellow!" << endl;
+  if (!setRGBColor(&rgb, 100, 50, 0)) {
+    cerr << "Error: Yellow color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "green!" << endl;
+  if (!setRGBColor(&rgb, 0, 100, 0)) {
+    cerr << "Error: Green color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "cyan!" << endl;
+  if (!setRGBColor(&rgb, 0, 100, 100)) {
+    cerr << "Error: Cyan color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "blue!" << endl;
+  if (!setRGBColor(&rgb, 0, 0, 100)) {
+    cerr << "Error: Blue color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "purple!" << endl;
+  if (!setRGBColor(&rgb, 50, 0, 100)) {
+    cerr << "Error: Purple color failed to set" << endl;
+    return false;
+  }
+  sleep(2);
+  cout << "off!" << endl;
+  if (!setRGBColor(&rgb, 0, 0, 0)) {
+    cerr << "Error: LED failed to turn off" << endl;
+    return false;
+  }
+  return true;
+}
+
+bool setRGBColor(PWMcontroller *rgb, int red, int green, int blue) {
+  if (!rgb->setChlLEDPercent(RED, red)) {
+    return false;
+  }
+  if (!rgb->setChlLEDPercent(GREEN, green)) {
+    return false;
+  }
+  if (!rgb->setChlLEDPercent(BLUE, blue)) {
+    return false;
   }
   return true;
 }
