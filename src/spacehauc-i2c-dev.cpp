@@ -434,14 +434,14 @@ bool PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off) {
  }
 
 /*!
- * setChlLEDPercent() sets the percent duty cycle of a PWM channel
+ * setChlPercent() sets the percent duty cycle of a PWM channel
  *
  * @param channel the channel being modified
  * @param percent the percent duty cycle
  *
  * @return Returns true/false depending on success/failure.
  */
- bool PWMcontroller::setChlLEDPercent(uint8_t channel, uint8_t percent) {
+ bool PWMcontroller::setChlPercent(uint8_t channel, uint8_t percent) {
    //percent = 100 - percent;
    float weighted;
    if (percent != 100) {

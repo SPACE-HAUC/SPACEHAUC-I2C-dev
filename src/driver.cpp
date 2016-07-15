@@ -186,13 +186,13 @@ bool testRGB(int file) {
 }
 
 bool setRGBColor(PWMcontroller *rgb, int red, int green, int blue) {
-  if (!rgb->setChlLEDPercent(RED, red)) {
+  if (!rgb->setChlPercent(RED, red)) {
     return false;
   }
-  if (!rgb->setChlLEDPercent(GREEN, green)) {
+  if (!rgb->setChlPercent(GREEN, green)) {
     return false;
   }
-  if (!rgb->setChlLEDPercent(BLUE, blue)) {
+  if (!rgb->setChlPercent(BLUE, blue)) {
     return false;
   }
   return true;
