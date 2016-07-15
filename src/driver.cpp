@@ -130,6 +130,9 @@ bool testRGB(int file) {
   // it doesn't matter for now because currently id registers are not used.
   uint8_t ctlRegister1 = 0x00;
   uint8_t ctlRegister2 = 0x01;
+  const int RED = 2;
+  const int GREEN = 3;
+  const int BLUE = 4;
   PWMcontroller rgb(file, address, ID_register, ctlRegister1, ctlRegister2);
   if (!rgb.initRGB_PWMcontroller()) {
     cerr << "Error: RGB PWM controller failed to initialize" << endl;
@@ -186,13 +189,16 @@ bool testRGB(int file) {
 }
 
 bool setRGBColor(PWMcontroller *rgb, int red, int green, int blue) {
-  if (!rgb->setChlLEDPercent(RED, red)) {
+  const int RED = 2;
+  const int GREEN = 3;
+  const int BLUE = 4;
+  if (!rgb->setChlPercent(RED, red)) {
     return false;
   }
-  if (!rgb->setChlLEDPercent(GREEN, green)) {
+  if (!rgb->setChlPercent(GREEN, green)) {
     return false;
   }
-  if (!rgb->setChlLEDPercent(BLUE, blue)) {
+  if (!rgb->setChlPercent(BLUE, blue)) {
     return false;
   }
   return true;
