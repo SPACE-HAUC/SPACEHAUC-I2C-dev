@@ -19,6 +19,17 @@ using std::string;
 using std::cout;
 using std::endl;
 
+I2C_Basic::~I2C_Basic() {}
+
+int I2C_Basic::openDevice(string I2C_device_name) {
+  return open(I2C_device_name.c_str(), O_RDWR);
+}
+
+int I2C_Basic::I2C_ctl(int file, i2c_rdwr_ioctl_data *packets) {
+  return ioctl(file, I2C_RDWR, packets);
+}
+
+
 /*!
  * initBus attempts to enable the i2c bus number that is passed to it. This bus
  * can now be written to and read from.
@@ -27,8 +38,9 @@ using std::endl;
  * @return success/failure
  */
 bool initBus(int bus, int *file) {
+  I2C_Basic i2c_basic;
   string I2C_device_name = "/dev/i2c-" + std::to_string(bus);
-  *file = open(I2C_device_name.c_str(), O_RDWR);
+  *file = i2c_basic.openDevice(I2C_device_name);
   if (*file) {
     return true;
   }
@@ -78,7 +90,7 @@ int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   packets.msgs      = messages;
   packets.nmsgs     = 2;
 
-  return ioctl(mFile, I2C_RDWR, &packets);
+  return I2C_ctl(mFile, &packets);
 }
 
 /*!
@@ -109,7 +121,7 @@ int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   packets.msgs      = messages;
   packets.nmsgs     = 1;
 
-  return ioctl(mFile, I2C_RDWR, &packets);
+  return I2C_ctl(mFile, &packets);
 }
 
 /*!
@@ -148,7 +160,7 @@ TemperatureSensor::~TemperatureSensor() {}
  */
 bool TemperatureSensor::initTempSensor() {
   uint8_t data = 0x98;
-  if (!writeBytes(mControlRegisters[0], &data, 1)) {
+  if (writeBytes(mControlRegisters[0], &data, 1) <= 0) {
     return false;
   }
   return true;
@@ -206,11 +218,11 @@ bool Magnetometer::initMagnetometer() {
   uint8_t scale = (uint8_t) mScale << 5;
   // all other bits 0
   uint8_t data = 0x00;
-  if (!writeBytes(mControlRegisters[1], &data, 1)) {
+  if (writeBytes(mControlRegisters[1], &data, 1) <= 0) {
     return false;
   }
   // continuous conversion mode
-  if (!writeBytes(mControlRegisters[1], &scale, 1)) {
+  if (writeBytes(mControlRegisters[1], &scale, 1) <= 0) {
     return false;
   }
   return true;
@@ -278,13 +290,13 @@ bool LuminositySensor::initLuminositySensor() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
   uint8_t data = 0x03;
-  if (!(writeBytes(mControlRegisters[0] | 0x80, &data, 1))) {
+  if (writeBytes(mControlRegisters[0] | 0x80, &data, 1) <= 0) {
     return false;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
   data = 0x02;
-  if (!(writeBytes(mControlRegisters[1] | 0x80, &data, 1))) {
+  if (writeBytes(mControlRegisters[1] | 0x80, &data, 1) <= 0) {
     return false;
   }
   return true;
@@ -299,11 +311,11 @@ double LuminositySensor::readLuminositySensor() {
   // Read 4 bytes of data from register(0x0C | 0x80)
   // ch0 lsb, ch0 msb, ch1 lsb, ch1 msb
   uint8_t input = 0;
-  if (!writeBytes(mDataRegisters[0] | 0x80, &input, 1)) {
+  if (writeBytes(mDataRegisters[0] | 0x80, &input, 1) <= 0) {
     return -1;  // error
   }
   uint8_t data[2] = {0};
-  if (!readBytes(mDataRegisters[0], data, 2)) {
+  if (readBytes(mDataRegisters[0], data, 2) <= 0) {
     return -1;  // error
   }
   // Convert the data
@@ -363,24 +375,24 @@ bool PWMcontroller::setFreq(float freq) {
   uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
   uint8_t modeReg;
   // Set the SLEEP bit, which stops the oscillator on the part.
-  if (!readBytes(0x00, &modeReg, 1)) {
+  if (readBytes(0x00, &modeReg, 1) <= 0) {
     return false;
   }
   modeReg |= 0x10;  // changes 5th bit to 1 to enable sleep
-  if (!writeBytes(0x00, &modeReg, 1)) {
+  if (writeBytes(0x00, &modeReg, 1) <= 0) {
     return false;
   }
   // This register can only be written when the oscillator is stopped.
-  if (!writeBytes(0xfe, &prescaler, 1)) {
+  if (writeBytes(0xfe, &prescaler, 1) <= 0) {
     return false;
   }
 
   // Clear the sleep bit.
-  if (!readBytes(0x00, &modeReg, 1)) {
+  if (readBytes(0x00, &modeReg, 1) <= 0) {
     return false;
   }
   modeReg &= ~(0x10);
-  if (!writeBytes(0x00, &modeReg, 1)) {
+  if (writeBytes(0x00, &modeReg, 1) <= 0) {
     return false;
   }
 
@@ -391,11 +403,11 @@ bool PWMcontroller::setFreq(float freq) {
 
   // Set the RESTART bit which, counterintuitively, clears the actual RESTART
   //  bit in the register.
-  if (!readBytes(0x00, &modeReg, 1)) {
+  if (readBytes(0x00, &modeReg, 1) <= 0) {
     return false;
   }
   modeReg |= 0x80;
-  if (!writeBytes(0x00, &modeReg, 1)) {
+  if (writeBytes(0x00, &modeReg, 1) <= 0) {
     return false;
   }
   return true;
@@ -420,13 +432,13 @@ bool PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off) {
   uint8_t onH = onL + 1;
   uint8_t offL = onL + 2;
   uint8_t offH = onL + 3;
-  if (!writeBytes(onL, &onLow, 1)) {
+  if (writeBytes(onL, &onLow, 1) <= 0) {
     return false;
-  } else if (!writeBytes(onH, &onHigh, 1)) {
+  } else if (writeBytes(onH, &onHigh, 1) <= 0) {
     return false;
-  } else if (!writeBytes(offL, &offLow, 1)) {
+  } else if (writeBytes(offL, &offLow, 1) <= 0) {
     return false;
-  } else if (!writeBytes(offH, &offHigh, 1)) {
+  } else if (writeBytes(offH, &offHigh, 1) <= 0) {
     return false;
   }
   return true;
