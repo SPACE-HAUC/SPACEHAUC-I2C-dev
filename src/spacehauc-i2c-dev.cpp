@@ -78,7 +78,7 @@ int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   packets.msgs      = messages;
   packets.nmsgs     = 2;
 
-  return ioctl(mFile, I2C_RDWR, &packets) >= 0;
+  return ioctl(mFile, I2C_RDWR, &packets);
 }
 
 /*!
@@ -109,7 +109,7 @@ int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   packets.msgs      = messages;
   packets.nmsgs     = 1;
 
-  return ioctl(mFile, I2C_RDWR, &packets) >= 0;
+  return ioctl(mFile, I2C_RDWR, &packets);
 }
 
 /*!
