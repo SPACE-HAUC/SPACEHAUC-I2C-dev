@@ -9,8 +9,8 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
-#include <cmath>
 #include <unistd.h>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -339,17 +339,17 @@ PWMcontroller::PWMcontroller(int file, uint8_t address, uint8_t ID_register,
  *
  * @return Returns true/false depending on success/failure.
  */
- bool PWMcontroller::initRGB_PWMcontroller() {
-   if (!setFreq(400)) {
-     return false;
-   }
-   //invert direction of current flow
-   //uint8_t mode2RegVal;
-   //cout << readBytes(0x01, &mode2RegVal, 1) << "   rb 328" << endl;
-   //mode2RegVal |= 0x10;
-   //cout << writeBytes(0x01, &mode2RegVal, 1) << "   wb 330" << endl;
-   return true;
- }
+bool PWMcontroller::initRGB_PWMcontroller() {
+  if (!setFreq(400)) {
+    return false;
+  }
+  // invert direction of current flow
+  // uint8_t mode2RegVal;
+  // cout << readBytes(0x01, &mode2RegVal, 1) << "   rb 328" << endl;
+  // mode2RegVal |= 0x10;
+  // cout << writeBytes(0x01, &mode2RegVal, 1) << "   wb 330" << endl;
+  return true;
+}
 
 /*!
  * setFreq() sets up the PWMcontroller to output to an RGB
@@ -360,47 +360,46 @@ PWMcontroller::PWMcontroller(int file, uint8_t address, uint8_t ID_register,
  * @return Returns true/false depending on success/failure.
  */
 bool PWMcontroller::setFreq(float freq) {
-   uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
-   uint8_t modeReg;
-   // Set the SLEEP bit, which stops the oscillator on the part.
-   if (!readBytes(0x00,&modeReg,1)) {
-     return false;
-   }
-   modeReg |= 0x10; // changes 5th bit to 1 to enable sleep
-   if (!writeBytes(0x00, &modeReg, 1)){
-     return false;
-   }
+  uint8_t prescaler = static_cast<uint8_t>(((25000000)/(4096*freq))-1);
+  uint8_t modeReg;
+  // Set the SLEEP bit, which stops the oscillator on the part.
+  if (!readBytes(0x00, &modeReg, 1)) {
+    return false;
+  }
+  modeReg |= 0x10;  // changes 5th bit to 1 to enable sleep
+  if (!writeBytes(0x00, &modeReg, 1)) {
+    return false;
+  }
+  // This register can only be written when the oscillator is stopped.
+  if (!writeBytes(0xfe, &prescaler, 1)) {
+    return false;
+  }
 
-   // This register can only be written when the oscillator is stopped.
-   if (!writeBytes(0xfe, &prescaler, 1)) {
-     return false;
-   }
+  // Clear the sleep bit.
+  if (!readBytes(0x00, &modeReg, 1)) {
+    return false;
+  }
+  modeReg &= ~(0x10);
+  if (!writeBytes(0x00, &modeReg, 1)) {
+    return false;
+  }
 
-   // Clear the sleep bit.
-   if (!readBytes(0x00, &modeReg, 1)) {
-     return false;
-   }
-   modeReg &= ~(0x10);
-   if (!writeBytes(0x00, &modeReg, 1)) {
-     return false;
-   }
-
-   usleep(500); // According to the datasheet, we must wait 500us before
+  usleep(500);  // According to the datasheet, we must wait 500us before
                 //  we touch the RESTART bit after touching the SLEEP bit.
                 //  *Maybe* we can count on that much time elapsing in the
                 //  I2C transaction, but let's be on the safe side.
 
-   // Set the RESTART bit which, counterintuitively, clears the actual RESTART
-   //  bit in the register.
-   if (!readBytes(0x00, &modeReg, 1)) {
-     return false;
-   }
-   modeReg |= 0x80;
-   if (!writeBytes(0x00, &modeReg, 1)) {
-     return false;
-   }
-   return true;
- }
+  // Set the RESTART bit which, counterintuitively, clears the actual RESTART
+  //  bit in the register.
+  if (!readBytes(0x00, &modeReg, 1)) {
+    return false;
+  }
+  modeReg |= 0x80;
+  if (!writeBytes(0x00, &modeReg, 1)) {
+    return false;
+  }
+  return true;
+}
 
 /*!
  * channelWrite() This function actually does the hardware interaction, setting
@@ -413,25 +412,25 @@ bool PWMcontroller::setFreq(float freq) {
  * @return Returns true/false depending on success/failure.
  */
 bool PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off) {
-   uint8_t offHigh = off >> 8;
-   uint8_t onHigh = on >> 8;
-   uint8_t onLow = on;
-   uint8_t offLow = off;
-   uint8_t onL = 0x06 + (channel*4);
-   uint8_t onH = onL + 1;
-   uint8_t offL = onL + 2;
-   uint8_t offH = onL + 3;
-   if (!writeBytes(onL, &onLow, 1)) {
-     return false;
-   } else if (!writeBytes(onH, &onHigh, 1)) {
-     return false;
-   } else if (!writeBytes(offL, &offLow, 1)) {
-     return false;
-   } else if (!writeBytes(offH, &offHigh, 1)) {
-     return false;
-   }
-   return true;
- }
+  uint8_t offHigh = off >> 8;
+  uint8_t onHigh = on >> 8;
+  uint8_t onLow = on;
+  uint8_t offLow = off;
+  uint8_t onL = 0x06 + (channel*4);
+  uint8_t onH = onL + 1;
+  uint8_t offL = onL + 2;
+  uint8_t offH = onL + 3;
+  if (!writeBytes(onL, &onLow, 1)) {
+    return false;
+  } else if (!writeBytes(onH, &onHigh, 1)) {
+    return false;
+  } else if (!writeBytes(offL, &offLow, 1)) {
+    return false;
+  } else if (!writeBytes(offH, &offHigh, 1)) {
+    return false;
+  }
+  return true;
+}
 
 /*!
  * setChlPercent() sets the percent duty cycle of a PWM channel
@@ -441,20 +440,19 @@ bool PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off) {
  *
  * @return Returns true/false depending on success/failure.
  */
- bool PWMcontroller::setChlPercent(uint8_t channel, uint8_t percent) {
-   //percent = 100 - percent;
-   float weighted;
-   if (percent != 100) {
-     percent = 100 - percent;
-     weighted = 1-(log10(percent)/2);
-   } else {
-     weighted = 1;
-   }
-   if (!setChlDuty(channel, weighted*100)) {
-     return false;
-   }
-   return true;
- }
+bool PWMcontroller::setChlPercent(uint8_t channel, uint8_t percent) {
+  float weighted;
+  if (percent != 100) {
+    percent = 100 - percent;
+    weighted = 1-(log10(percent)/2);
+  } else {
+    weighted = 1;
+  }
+  if (!setChlDuty(channel, weighted*100)) {
+    return false;
+  }
+  return true;
+}
 
 /*!
  * setChlDuty() sets the duty cycle to the given percentage.
@@ -465,10 +463,10 @@ bool PWMcontroller::channelWrite(uint8_t channel, uint16_t on, uint16_t off) {
  * @return Returns true/false depending on success/failure.
  */
 bool PWMcontroller::setChlDuty(uint8_t channel, float duty) {
-   uint16_t onTime = 0;
-   uint16_t offTime = uint16_t(duty*4096*.01)-1;
-   if (!channelWrite(channel, onTime, offTime)) {
-     return false;
-   }
-   return true;
+  uint16_t onTime = 0;
+  uint16_t offTime = uint16_t(duty*4096*.01)-1;
+  if (!channelWrite(channel, onTime, offTime)) {
+    return false;
+  }
+  return true;
 }
