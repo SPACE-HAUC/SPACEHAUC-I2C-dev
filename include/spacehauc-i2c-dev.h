@@ -43,13 +43,22 @@ struct fTriplet {
  */
 enum MagScale { MAG_SCALE_2GS, MAG_SCALE_4GS, MAG_SCALE_8GS, MAG_SCALE_12GS };
 
+class I2C_Basic {
+ protected:
+  virtual int openDevice(string I2C_device_name);
+  virtual int I2C_ctl(int file, i2c_rdwr_ioctl_data *packets);
+ public:
+  virtual ~I2C_Basic();
+  friend bool initBus(int bus, int *file);
+};
+
 bool initBus(int bus, int *file);
 
 /*!
  * This is a class for any i2c device to inherit from. All i2c devices need
  * these methods.
  */
-class I2C_Device {
+class I2C_Device : public I2C_Basic {
  protected:
   /*! This is an integer that represents the opened I2C file (device) */
   int mFile;

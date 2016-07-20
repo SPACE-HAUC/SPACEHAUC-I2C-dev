@@ -5,6 +5,8 @@
 
 ## SPACEHAUC I2C DEV TOOLS ALPHA v0.4.1.0
 
+This is the repository for SPACEHAUC-I2C-dev code audit. 
+
 This is a library managed by the UMass Lowell SPACE HAUC Command and Data Handling Team. Its various functions should make using I2C in Linux on an Intel Edison much easier. Currently in Alpha release, with support for temperature sensors, magnetometers, luminosity sensors, and a pulse width modulation board. More sensors are planned in the future.
 
 #### Using This Library
