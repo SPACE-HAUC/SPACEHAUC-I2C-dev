@@ -42,14 +42,14 @@ int main(int argc, char* argv[]) {
   } else {
     cout << "Failure" << endl;
   }
-  cout << "Testing Luminosity Sensor..." << endl;
-  if (testLuminositySensor(file)) {
+  cout << "Testing RGB functionality of PWM Board..." << endl;
+  if (testRGB(file)) {
     cout << "Success" << endl;
   } else {
     cout << "Failure" << endl;
   }
-  cout << "Testing RGB functionality of PWM Board..." << endl;
-  if (testRGB(file)) {
+  cout << "Testing Luminosity Sensor..." << endl;
+  if (testLuminositySensor(file)) {
     cout << "Success" << endl;
   } else {
     cout << "Failure" << endl;
@@ -58,20 +58,21 @@ int main(int argc, char* argv[]) {
 }
 
 bool testTemperatureSensor(int file) {
+  /*
   uint8_t address = 0x1d;
   uint8_t ID_register = 0x0F;
   uint8_t ctlRegister = 0x24;
   uint8_t dataRegister = 0x05;
-  TemperatureSensor tempSensor(file, address, ID_register, ctlRegister,
-    dataRegister);
-  if (tempSensor.initTempSensor() == false) {
+  */
+  MCP9808 tempSensor(file, 0x18);
+  if (tempSensor.init() == false) {
     cerr << "Error: Temperature Sensor failed to initalize." << endl;
     return false;
   }
   cout << "Initialized Temperature Sensor" << endl;
   cout << "Reading Temperature data..." << endl;
   for (int i = 0; i < 5; ++i) {
-    cout << "Temperature = " << static_cast<int>(tempSensor.readTemp()) << endl;
+    cout << "Temperature = " << tempSensor.read() << endl;
     usleep(500000);
   }
   return true;

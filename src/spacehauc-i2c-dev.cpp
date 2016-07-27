@@ -482,3 +482,35 @@ bool PWMcontroller::setChlDuty(uint8_t channel, float duty) {
   }
   return true;
 }
+
+MCP9808::MCP9808(int file, uint8_t address) {
+  mFile = file;
+  mAddress.push_back(address);
+}
+
+MCP9808::~MCP9808() {}
+
+bool MCP9808::init() {
+  uint8_t ctlData[] = {0x00, 0x00}; // set up control register for continuous conversion
+  if (writeBytes(controlRegister, ctlData, 2) <= 0) {
+    return false;
+  }
+  uint8_t resolutionData[] = {0x03};
+  if (writeBytes(resolutionRegister, resolutionData, 1) <= 0) {
+    return false;
+  }
+  return true;
+}
+
+double MCP9808::read() {
+  uint8_t data[2] = {0};
+  if (readBytes(dataRegister, data, 2) <= 0) {
+    return -100000; // not a temperature, use for error checking
+  };
+  int temp = (data[0] & 0x1F) * 256 + data[1]; // clear first 3 bits and combines
+  if (temp > 4095) {
+    temp -= 8192;
+  }
+  double cTemp = temp * 0.0625;
+  return cTemp;
+}
