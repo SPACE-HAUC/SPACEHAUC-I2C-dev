@@ -239,7 +239,7 @@ fTriplet Magnetometer::readMagnetometer() {
   uint8_t buffer[6] = {0};
   readBytes(mDataRegisters[0], buffer, 6);
   data.x = ((buffer[1] << 8) | buffer[0]);
-  data.y = ((buffer[3] << 8) | buffer[2]);
+  data.y = ((buffer[2] << 8) | buffer[2]);
   data.z = ((buffer[3] << 8) | buffer[4]);
   data.x = (data.x)/*- m_bias.x) * m_scale.x */* mMagScaleValue[mScale];
   data.y = (data.y)/*- m_bias.y) * m_scale.y */* mMagScaleValue[mScale];
