@@ -160,10 +160,7 @@ TemperatureSensor::~TemperatureSensor() {}
  */
 bool TemperatureSensor::initTempSensor() {
   uint8_t data = 0x98;
-  if (writeBytes(mControlRegisters[0], &data, 1) <= 0) {
-    return false;
-  }
-  return true;
+  return (writeBytes(mControlRegisters[0], &data, 1) > 0);
 }
 
 /*!
@@ -218,14 +215,7 @@ bool Magnetometer::initMagnetometer() {
   uint8_t scale = (uint8_t) mScale << 5;
   // all other bits 0
   uint8_t data = 0x00;
-  if (writeBytes(mControlRegisters[1], &data, 1) <= 0) {
-    return false;
-  }
-  // continuous conversion mode
-  if (writeBytes(mControlRegisters[1], &scale, 1) <= 0) {
-    return false;
-  }
-  return true;
+  return ((writeBytes(mControlRegisters[1], &data, 1) > 0) && (writeBytes(mControlRegisters[1], &scale, 1) > 0));
 }
 
 /*!
@@ -352,15 +342,7 @@ PWMcontroller::PWMcontroller(int file, uint8_t address, uint8_t ID_register,
  * @return Returns true/false depending on success/failure.
  */
 bool PWMcontroller::initRGB_PWMcontroller() {
-  if (!setFreq(400)) {
-    return false;
-  }
-  // invert direction of current flow
-  // uint8_t mode2RegVal;
-  // cout << readBytes(0x01, &mode2RegVal, 1) << "   rb 328" << endl;
-  // mode2RegVal |= 0x10;
-  // cout << writeBytes(0x01, &mode2RegVal, 1) << "   wb 330" << endl;
-  return true;
+  return setFreq(400);
 }
 
 /*!
@@ -477,8 +459,5 @@ bool PWMcontroller::setChlPercent(uint8_t channel, uint8_t percent) {
 bool PWMcontroller::setChlDuty(uint8_t channel, float duty) {
   uint16_t onTime = 0;
   uint16_t offTime = uint16_t(duty*4096*.01)-1;
-  if (!channelWrite(channel, onTime, offTime)) {
-    return false;
-  }
-  return true;
+  return (channelWrite(channel, onTime, offTime));
 }
