@@ -185,14 +185,12 @@ bool setRGBColor(PWMcontroller *rgb, int red, int green, int blue) {
   const int RED = 2;
   const int GREEN = 3;
   const int BLUE = 4;
-  if (!rgb->setChlPercent(RED, red)) {
-    return false;
+  if (rgb->setChlPercent(RED, red)) {
+    if (rgb->setChlPercent(BLUE, blue)) {
+      if (rgb->setChlPercent(GREEN, green)) {
+        return true;
+      }
+    }
   }
-  if (!rgb->setChlPercent(GREEN, green)) {
-    return false;
-  }
-  if (!rgb->setChlPercent(BLUE, blue)) {
-    return false;
-  }
-  return true;
+  return false;
 }
