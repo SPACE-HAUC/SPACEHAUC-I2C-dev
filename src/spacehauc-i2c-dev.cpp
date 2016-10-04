@@ -215,6 +215,7 @@ bool Magnetometer::initMagnetometer() {
   uint8_t scale = (uint8_t) mScale << 5;
   // all other bits 0
   uint8_t data = 0x00;
+  // continuous conversion mode
   return ((writeBytes(mControlRegisters[1], &data, 1) > 0) && (writeBytes(mControlRegisters[1], &scale, 1) > 0));
 }
 
@@ -342,6 +343,11 @@ PWMcontroller::PWMcontroller(int file, uint8_t address, uint8_t ID_register,
  * @return Returns true/false depending on success/failure.
  */
 bool PWMcontroller::initRGB_PWMcontroller() {
+  // invert direction of current flow
+  // uint8_t mode2RegVal;
+  // cout << readBytes(0x01, &mode2RegVal, 1) << "   rb 328" << endl;
+  // mode2RegVal |= 0x10;
+  // cout << writeBytes(0x01, &mode2RegVal, 1) << "   wb 330" << endl;
   return setFreq(400);
 }
 
