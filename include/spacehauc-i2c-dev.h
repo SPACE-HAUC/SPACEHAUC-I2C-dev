@@ -72,6 +72,8 @@ class I2C_Device : public I2C_Basic {
   I2C_Device();
   virtual ~I2C_Device();
   bool initDevice();
+  //virtual bool init() = 0;
+  //virtual double read() = 0;
 };
 
 /*!
@@ -148,6 +150,25 @@ class PWMcontroller : public I2C_Device {
   bool channelWrite(uint8_t channel, uint16_t on, uint16_t off);
   bool setChlPercent(uint8_t channel, uint8_t percent);
   bool setChlDuty(uint8_t channel, float duty);
+};
+
+/*!
+ * This is a class for a temperature sensor, specifically the 9DoF board's
+ * sensor.
+ */
+class MCP9808 : public I2C_Device {
+ private:
+  const uint8_t ID_register = 0x07;
+  const uint8_t dataRegister = 0x05;
+  const uint8_t controlRegister = 0x01;
+  const uint8_t resolutionRegister = 0x08;
+  /*! This is a variable to hold the measured temperature value. */
+  uint8_t mTemperature;
+ public:
+  explicit MCP9808(int file, uint8_t address);
+  ~MCP9808();
+  bool init();
+  double read();
 };
 
 #endif  // INCLUDE_SPACEHAUC_I2C_DEV_H_
