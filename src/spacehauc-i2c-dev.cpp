@@ -254,21 +254,15 @@ fTriplet Magnetometer::readMagnetometer() {
  * @param dataRegister This is the register that measured magnetic data is
  *        stored in. See sensor datasheet for info.
  */
-LuminositySensor::LuminositySensor(int file, uint8_t address,
-    uint8_t ID_register, uint8_t controlRegister1, uint8_t controlRegister2,
-    uint8_t dataRegister) {
+TSL2561::TSL2561(int file, uint8_t address) {
   mFile = file;
   mAddress.push_back(address);
-  mID_Regsiters.push_back(ID_register);
-  mControlRegisters.push_back(controlRegister1);
-  mControlRegisters.push_back(controlRegister2);
-  mDataRegisters.push_back(dataRegister);
 }
 
 /*!
- * Destructor for a LuminositySensor object.
+ * Destructor for a TSL2561 object.
  */
-LuminositySensor::~LuminositySensor() {}
+TSL2561::~TSL2561() {}
 
 /*!
  * initLuminositySensor() initializes the Luminosity Sensor by writing 0x03 to
@@ -277,17 +271,17 @@ LuminositySensor::~LuminositySensor() {}
  *
  * @return success/failure
  */
-bool LuminositySensor::initLuminositySensor() {
+bool TSL2561::init() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
   uint8_t data = 0x03;
-  if (writeBytes(mControlRegisters[0] | 0x80, &data, 1) <= 0) {
+  if (writeBytes(controlRegister1 | 0x80, &data, 1) <= 0) {
     return false;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
   data = 0x02;
-  if (writeBytes(mControlRegisters[1] | 0x80, &data, 1) <= 0) {
+  if (writeBytes(controlRegister2 | 0x80, &data, 1) <= 0) {
     return false;
   }
   return true;
@@ -298,15 +292,15 @@ bool LuminositySensor::initLuminositySensor() {
  *
  * @return The luminosity in lux if data was read, or -1 if data couldn't be.
  */
-double LuminositySensor::readLuminositySensor() {
+double TSL2561::read() {
   // Read 4 bytes of data from register(0x0C | 0x80)
   // ch0 lsb, ch0 msb, ch1 lsb, ch1 msb
   uint8_t input = 0;
-  if (writeBytes(mDataRegisters[0] | 0x80, &input, 1) <= 0) {
+  if (writeBytes(dataRegister | 0x80, &input, 1) <= 0) {
     return -1;  // error
   }
   uint8_t data[2] = {0};
-  if (readBytes(mDataRegisters[0], data, 2) <= 0) {
+  if (readBytes(dataRegister, data, 2) <= 0) {
     return -1;  // error
   }
   // Convert the data

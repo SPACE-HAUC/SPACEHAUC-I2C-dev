@@ -122,19 +122,19 @@ class Magnetometer : public I2C_Device {
 /*!
  * This is a class for a luminosity sensor.
  */
-class LuminositySensor : public I2C_Device {
+class TSL2561 : public I2C_Device {
  private:
-  /*! A vector that holds the data register(s) for the sensor. */
-  vector<uint8_t> mDataRegisters;
-  /*! A vector that holds the control registers for the sensor. */
-  vector<uint8_t> mControlRegisters;
+  const uint8_t ID_register = 0x0A;
+  const uint8_t controlRegister1 = 0x00;
+  const uint8_t controlRegister2 = 0x01;
+  const uint8_t dataRegister = 0x0C;
+    /*! This is a variable to hold the measured luminosity value. */
   double mLuminosity;
  public:
-  LuminositySensor(int file, uint8_t address, uint8_t ID_register,
-    uint8_t controlRegister1, uint8_t controlRegister2, uint8_t dataRegister);
-  ~LuminositySensor();
-  bool initLuminositySensor();
-  double readLuminositySensor();
+  TSL2561(int file, uint8_t address);
+  ~TSL2561();
+  bool init();
+  double read();
 };
 
 class PWMcontroller : public I2C_Device {
@@ -153,7 +153,7 @@ class PWMcontroller : public I2C_Device {
 };
 
 /*!
- * This is a class for a temperature sensor, specifically the 9DoF board's
+ * This is a class for a temperature sensor, specifically the MCP9808
  * sensor.
  */
 class MCP9808 : public I2C_Device {

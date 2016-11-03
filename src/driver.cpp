@@ -101,21 +101,15 @@ bool testMagnetometer(int file) {
 }
 
 bool testLuminositySensor(int file) {
-  uint8_t address = 0x39;
-  uint8_t ID_register = 0x0A;
-  uint8_t ctlRegister1 = 0x00;
-  uint8_t ctlRegister2 = 0x01;
-  uint8_t dataRegister = 0x0C;
-  LuminositySensor light(file, address, ID_register, ctlRegister1, ctlRegister2,
-    dataRegister);
-  if (light.initLuminositySensor() == false) {
+  TSL2561 light(file, 0x32);
+  if (light.init() == false) {
     cerr << "Error: Luminosity Sensor failed to initialize." << endl;
     return false;
   }
   cout << "Initialized Luminosity Sensor" << endl;
   cout << "Reading light intensity data..." << endl;
   for (int i = 0; i < 5; ++i) {
-    cout << "Luminosity: " << light.readLuminositySensor() << endl;
+    cout << "Luminosity: " << light.read() << endl;
     sleep(1);
   }
   return true;
