@@ -138,7 +138,7 @@ int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
  * @param dataRegister This is the register that measured temperature data is
  *        stored in. See sensor datasheet for info.
  */
-TemperatureSensor::TemperatureSensor(int file, uint8_t address,
+ NineDoF_temp::NineDoF_temp(int file, uint8_t address,
   uint8_t ID_register, uint8_t controlRegister, uint8_t dataRegister) {
   mFile = file;
   mAddress.push_back(address);
@@ -150,7 +150,7 @@ TemperatureSensor::TemperatureSensor(int file, uint8_t address,
 /*!
  * Destructor for a Temperature Sensor.
  */
-TemperatureSensor::~TemperatureSensor() {}
+NineDoF_temp::~NineDoF_temp() {}
 
 /*!
  * initTempSensor initializes the temperature sensor by writing to the control
@@ -158,7 +158,7 @@ TemperatureSensor::~TemperatureSensor() {}
  *
  * @return  success/failure
  */
-bool TemperatureSensor::initTempSensor() {
+bool NineDoF_temp::init() {
   uint8_t data = 0x98;
   return (writeBytes(mControlRegisters[0], &data, 1) > 0);
 }
@@ -168,7 +168,7 @@ bool TemperatureSensor::initTempSensor() {
  *
  * @return mTemperature the temperature
  */
-uint8_t TemperatureSensor::readTemp() {
+uint8_t NineDoF_temp::read() {
   readBytes(mDataRegisters[0], &mTemperature, 2);
   return mTemperature;
 }
@@ -189,7 +189,7 @@ uint8_t TemperatureSensor::readTemp() {
  * @param dataRegister This is the register that measured magnetic data is
  *        stored in. See sensor datasheet for info.
  */
-Magnetometer::Magnetometer(int file, uint8_t address, uint8_t ID_register,
+NineDoF_Magnetometer::NineDoF_Magnetometer(int file, uint8_t address, uint8_t ID_register,
     uint8_t controlRegister1, uint8_t controlRegister2, uint8_t dataRegister,
     MagScale scale) {
   mFile = file;
@@ -204,14 +204,14 @@ Magnetometer::Magnetometer(int file, uint8_t address, uint8_t ID_register,
 /*!
  * Destructor for a Magnetometer.
  */
-Magnetometer::~Magnetometer() {}
+NineDoF_Magnetometer::~NineDoF_Magnetometer() {}
 
 /*!
  * initMagnetometer() initializes the Magnetometer by enabling the registers
  *
  * @return success/failure
  */
-bool Magnetometer::initMagnetometer() {
+bool NineDoF_Magnetometer::init() {
   uint8_t scale = (uint8_t) mScale << 5;
   // all other bits 0
   uint8_t data = 0x00;
@@ -225,7 +225,7 @@ bool Magnetometer::initMagnetometer() {
  *
  * @return data The struct of x, y, and z components of the magnetic field.
  */
-fTriplet Magnetometer::readMagnetometer() {
+fTriplet NineDoF_Magnetometer::read() {
   fTriplet data = {0};
   uint8_t buffer[6] = {0};
   readBytes(mDataRegisters[0], buffer, 6);
@@ -461,6 +461,9 @@ bool PWMcontroller::setChlDuty(uint8_t channel, float duty) {
   uint16_t offTime = uint16_t(duty*4096*.01)-1;
   return (channelWrite(channel, onTime, offTime));
 }
+
+// Adafruit MCP9808 I2C Temperature Sensor
+// More info https://www.adafruit.com/product/1782
 
 MCP9808::MCP9808(int file, uint8_t address) {
   mFile = file;

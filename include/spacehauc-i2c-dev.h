@@ -80,7 +80,7 @@ class I2C_Device : public I2C_Basic {
  * This is a class for a temperature sensor, specifically the 9DoF board's
  * sensor.
  */
-class TemperatureSensor : public I2C_Device {
+class NineDoF_temp : public I2C_Device {
  private:
   /*! A vector of each of the data registers the temperature sensor uses. */
   vector<uint8_t> mDataRegisters;
@@ -89,17 +89,17 @@ class TemperatureSensor : public I2C_Device {
   /*! This is a variable to hold the measured temperature value. */
   uint8_t mTemperature;
  public:
-  explicit TemperatureSensor(int file, uint8_t address, uint8_t ID_register,
+  explicit NineDoF_temp(int file, uint8_t address, uint8_t ID_register,
     uint8_t controlRegister, uint8_t dataRegister);
-  ~TemperatureSensor();
-  bool initTempSensor();
-  uint8_t readTemp();
+  ~NineDoF_temp();
+  bool init();
+  uint8_t read();
 };
 
 /*!
- * This is a class for a magnetometer, specifically the 9DoF board's sensor.
+ * This is a class for a NineDoF_Magnetometer, specifically the 9DoF board's sensor.
  */
-class Magnetometer : public I2C_Device {
+class NineDoF_Magnetometer : public I2C_Device {
  private:
   /*! An array that holds each possible scaling for the magnetometer. */
   const float mMagScaleValue[5] = { 2 / 32768.0, 4 / 32768.0, 6 / 32768.0,
@@ -111,12 +111,12 @@ class Magnetometer : public I2C_Device {
   /*! A vector that holds the control registers for the magnetometer. */
   vector<uint8_t> mControlRegisters;
  public:
-  explicit Magnetometer(int file, uint8_t address, uint8_t ID_register,
+  explicit NineDoF_Magnetometer(int file, uint8_t address, uint8_t ID_register,
     uint8_t controlRegister1, uint8_t controlRegister2, uint8_t dataRegister,
     MagScale scale);
-  ~Magnetometer();
-  bool initMagnetometer();
-  fTriplet readMagnetometer();
+  ~NineDoF_Magnetometer();
+  bool init();
+  fTriplet read();
 };
 
 /*!

@@ -84,16 +84,16 @@ bool testMagnetometer(int file) {
   uint8_t ctlRegister1 = 0x25;
   uint8_t ctlRegister2 = 0x26;
   uint8_t dataRegister = 0x08;
-  Magnetometer magnetometer(file, address, ID_register, ctlRegister1,
+  NineDoF_Magnetometer magnetometer(file, address, ID_register, ctlRegister1,
     ctlRegister2, dataRegister, MAG_SCALE_2GS);
-  if (magnetometer.initMagnetometer() == false) {
+  if (magnetometer.init() == false) {
     cerr << "Error: Magnetometer failed to initalize." << endl;
     return false;
   }
   cout << "Initialized Magnetometer" << endl;
   cout << "Reading Magnetic Field Data..." << endl;
   for (int i = 0; i < 5; ++i) {
-    fTriplet field = magnetometer.readMagnetometer();
+    fTriplet field = magnetometer.read();
     cout << "x: " << field.x << " y: " << field.y << " z: " << field.z << endl;
     usleep(500000);
   }
