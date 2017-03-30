@@ -12,7 +12,7 @@ This is a library managed by the UMass Lowell SPACE HAUC Command and Data Handli
 #### Using This Library
 This i2c header file and implementation file, when placed inside your include and src folders of cmake (respectively) should greatly simplify the use of I2C. Instead of complex function calls and weird arrays, our I2C library first requires you to initialize the hardware bus that your i2c device will be communicating over and give it a file to write to:
 
-###Instructions Are For A Past Release For This API. A New Readme Will Highlight New Changes Soon
+### Instructions Are For A Past Release For This API. A New Readme Will Highlight New Changes Soon
 
 ```C++
 int file;
