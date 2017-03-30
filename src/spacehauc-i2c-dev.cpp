@@ -4,7 +4,7 @@
 
 // Copyright 2016 UMass Lowell Command and Data Handling Team
 
-#include "../include/spacehauc-i2c-dev.h"
+#include "spacehauc-i2c-dev.h"
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
@@ -13,8 +13,8 @@
 #include <cmath>
 #include <string>
 #include <vector>
-
 #include <iostream>
+
 using std::string;
 using std::cout;
 using std::endl;

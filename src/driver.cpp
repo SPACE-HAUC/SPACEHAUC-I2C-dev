@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "../include/spacehauc-i2c-dev.h"
+#include "spacehauc-i2c-dev.h"
 
 using std::vector;
 using std::string;
