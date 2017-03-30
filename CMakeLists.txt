@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -g -Wall")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
 # include directory for headers
-include_directories(include)
+include_directories(include include/api)
 
 file(GLOB SOURCES "src/*.cpp")
 
