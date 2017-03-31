@@ -2,7 +2,7 @@
  * @file
  */
 
-// Copyright 2016 UMass Lowell Command and Data Handling Team
+ // Copyright 2016 - 2017 David Baumann and Jacob Hempel, UMass Lowell C&DH Team
 
 #include "../include/spacehauc-i2c-dev.h"
 #include <sys/ioctl.h>
@@ -28,13 +28,15 @@ using spacehauc_i2c::MCP9808;
 using spacehauc_i2c::TSL2561;
 
 /*!
- * converts a 8 bit number into hexadecimal
+ * converts a base 10 number into hexadecimal
+ *
+ * @param decimal A number in base 10 to be converted to hexadecimal in a string
+ * @return a string that contains the decimal number in base 16
  */
-
 string spacehauc_i2c::toHexString(uint8_t decimal) {
   std::stringstream stream;
   stream << "0x" <<  std::setfill ('0') << std::setw(sizeof(uint8_t)*2)
-  << std::hex << static_cast<unsigned int>(decimal);
+    << std::hex << static_cast<unsigned int>(decimal);
   return stream.str();
 }
 
@@ -56,24 +58,28 @@ bool I2C_Bus::init(int bus) {
   return false;
 }
 
-
+/*!
+ * Destructor for an I2C_Bus object
+ */
 I2C_Bus::~I2C_Bus() {}
 
+/*!
+ * Wrapper function for ioctl system call
+ *
+ * @param packets pointer to a system defined structure that contains messages
+ * @return number of messages exchanged
+ */
 int I2C_Bus::I2C_ctl(i2c_rdwr_ioctl_data *packets) {
   return ioctl(file, I2C_RDWR, packets);
 }
 
 /*!
- * Constructor for I2C Device. Currently has no functionality, it may in
- * a future release.
- *
+ * Default Constructor for I2C Device. Currently does nothing.
  */
 I2C_Device::I2C_Device() {}
 
 /*!
- * Destructor for I2C Device. Currently has no functionality, it may in
- * a future release.
- *
+ * Destructor for I2C Device. Currently has no functionality.
  */
 I2C_Device::~I2C_Device() {}
 
@@ -86,7 +92,7 @@ I2C_Device::~I2C_Device() {}
  * @param *buffer Pointer to a buffer to store read data.
  * @param count The number of elements in the buffer.
  *
- * @return success/failure
+ * @return number of bytes exchanged
  */
 int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   struct i2c_rdwr_ioctl_data packets;
@@ -118,7 +124,7 @@ int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
  * @param *buffer A pointer to an array of input data.
  * @param count The number of elements in the input.
  *
- * @return success/failure
+ * @return number of bytes exchanged
  */
 int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   vector<uint8_t> input;
@@ -147,17 +153,8 @@ string I2C_Device::getName() {
 /*!
  * Constructor for a LuminositySensor object.
  *
- * @param file This is the i2c bus file that the sensor is connected to.
  * @param address This is the address of the sensor on the bus. See sensor
  *        datasheet for info.
- * @param ID_register This is the register that identifies the device. See
- *        sensor datasheet for info.
- * @param controlRegister1 This is the first register that controls the
- *        sensor. See sensor datasheet for info.
- * @param controlRegister2 This is the second register that controls the
- *        sensor. See sensor datasheet for info.
- * @param dataRegister This is the register that measured magnetic data is
- *        stored in. See sensor datasheet for info.
  */
 TSL2561::TSL2561(uint8_t address) {
   mAddress = address;
@@ -170,7 +167,7 @@ TSL2561::TSL2561(uint8_t address) {
 TSL2561::~TSL2561() {}
 
 /*!
- * initLuminositySensor() initializes the Luminosity Sensor by writing 0x03 to
+ * init() initializes the Luminosity Sensor by writing 0x03 to
  * the first control register (turning it on) and writing 0x02 to the second
  * one, enabling the sensor to read data.
  *
@@ -193,7 +190,7 @@ bool TSL2561::init() {
 }
 
 /*!
- * readLuminositySensor() reads data from the Luminosity sensor
+ * read() reads data from the Luminosity sensor
  *
  * @return The luminosity in lux if data was read, or -1 if data couldn't be.
  */
@@ -212,17 +209,28 @@ double TSL2561::read() {
   return ((data[1]) * 256 + data[0]);
 }
 
-
-// Adafruit MCP9808 I2C Temperature Sensor
-// More info https://www.adafruit.com/product/1782
-
+/*!
+ * Constructor for the Adafruit MCP9808 I2C Temperature Sensor
+ * More info on the sensor can be found at https://www.adafruit.com/product/1782
+ *
+ *  @param address The i2c bus address that the sensor is on
+ */
 MCP9808::MCP9808(uint8_t address) {
   mAddress = address;
   deviceName = "MCP9808_" + toHexString(address);
 }
 
+/*!
+ * Destructor for a MCP9808 object
+ */
 MCP9808::~MCP9808() {}
 
+/*!
+ * init Initializes the sensor by enabling the control register for continuous
+ * conversion, and by setting the resolution on the resolutuion register.
+ *
+ * @return success/failure
+ */
 bool MCP9808::init() {
   // set up control register for continuous conversion
   uint8_t ctlData[] = {0x00, 0x00};
@@ -236,6 +244,12 @@ bool MCP9808::init() {
   return true;
 }
 
+/*!
+ * read Reads the current temperature from the sensor and returns that value
+ * in degrees Celsius.
+ *
+ * @return current temperature in degrees Celsius
+ */
 double MCP9808::read() {
   uint8_t data[2] = {0};
   if (readBytes(dataRegister, data, 2) <= 0) {
