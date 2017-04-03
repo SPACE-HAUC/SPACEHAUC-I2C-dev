@@ -1,4 +1,4 @@
-// Copyright 2016 UMass Lowell Command and Data Handling Team
+// Copyright 2016 - 2017 David Baumann and Jacob Hempel, UMass Lowell C&DH Team
 
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
   if (I2C_Bus::init(bus) == false) {
     cerr << "Error: I2C bus failed to open." << endl;
   }
-  cout << "File is: " << I2C_Bus::getFile() << endl;
   cout << "Testing Temperature Sensor..." << endl;
   if (testTemperatureSensor()) {
     cout << "Success" << endl;
