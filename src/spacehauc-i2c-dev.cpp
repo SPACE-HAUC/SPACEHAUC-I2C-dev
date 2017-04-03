@@ -22,10 +22,6 @@ using std::cout;
 using std::endl;
 using std::stringstream;
 
-using spacehauc_i2c::I2C_Bus;
-using spacehauc_i2c::I2C_Device;
-using spacehauc_i2c::MCP9808;
-using spacehauc_i2c::TSL2561;
 
 /*!
  * converts a base 10 number into hexadecimal
@@ -40,7 +36,7 @@ string spacehauc_i2c::toHexString(uint8_t decimal) {
   return stream.str();
 }
 
-int I2C_Bus::file = -1;  // default to not opened
+int spacehauc_i2c::I2C_Bus::file = -1;  // default to not opened
 
 /*!
 * initBus attempts to enable the i2c bus number that is passed to it. This bus
@@ -49,7 +45,7 @@ int I2C_Bus::file = -1;  // default to not opened
 * @param bus The i2c bus number to be enabled. (Almost always 1)
 * @return success/failure
 */
-bool I2C_Bus::init(int bus) {
+bool spacehauc_i2c::I2C_Bus::init(int bus) {
   string I2C_bus_name = "/dev/i2c-" + std::to_string(bus);
   file = open(I2C_bus_name.c_str(), O_RDWR);
   if (file > 0) {
@@ -61,7 +57,7 @@ bool I2C_Bus::init(int bus) {
 /*!
  * Destructor for an I2C_Bus object
  */
-I2C_Bus::~I2C_Bus() {}
+spacehauc_i2c::I2C_Bus::~I2C_Bus() {}
 
 /*!
  * Wrapper function for ioctl system call
@@ -69,19 +65,19 @@ I2C_Bus::~I2C_Bus() {}
  * @param packets pointer to a system defined structure that contains messages
  * @return number of messages exchanged
  */
-int I2C_Bus::I2C_ctl(i2c_rdwr_ioctl_data *packets) {
+int spacehauc_i2c::I2C_Bus::I2C_ctl(i2c_rdwr_ioctl_data *packets) {
   return ioctl(file, I2C_RDWR, packets);
 }
 
 /*!
  * Default Constructor for I2C Device. Currently does nothing.
  */
-I2C_Device::I2C_Device() {}
+spacehauc_i2c::I2C_Device::I2C_Device() {}
 
 /*!
  * Destructor for I2C Device. Currently has no functionality.
  */
-I2C_Device::~I2C_Device() {}
+spacehauc_i2c::I2C_Device::~I2C_Device() {}
 
 /*!
  * readBytes first edits the i2c_rdwr_ioctl_data and i2c_msg structs to include
@@ -94,7 +90,7 @@ I2C_Device::~I2C_Device() {}
  *
  * @return number of bytes exchanged
  */
-int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
+int spacehauc_i2c::I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   struct i2c_rdwr_ioctl_data packets;
   struct i2c_msg messages[2];
   /* write the register we want to read from */
@@ -126,7 +122,7 @@ int I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
  *
  * @return number of bytes exchanged
  */
-int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
+int spacehauc_i2c::I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   vector<uint8_t> input;
   input.push_back(reg);
   for (int i = 0; i < count; ++i) {
@@ -146,7 +142,7 @@ int I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
   return I2C_ctl(&packets);
 }
 
-string I2C_Device::getName() {
+string spacehauc_i2c::I2C_Device::getName() {
   return deviceName;
 }
 
@@ -156,7 +152,7 @@ string I2C_Device::getName() {
  * @param address This is the address of the sensor on the bus. See sensor
  *        datasheet for info.
  */
-TSL2561::TSL2561(uint8_t address) {
+spacehauc_i2c::TSL2561::TSL2561(uint8_t address) {
   mAddress = address;
   deviceName = "TSL2561_" + toHexString(address);
 }
@@ -164,7 +160,7 @@ TSL2561::TSL2561(uint8_t address) {
 /*!
  * Destructor for a TSL2561 object.
  */
-TSL2561::~TSL2561() {}
+spacehauc_i2c::TSL2561::~TSL2561() {}
 
 /*!
  * init() initializes the Luminosity Sensor by writing 0x03 to
@@ -173,7 +169,7 @@ TSL2561::~TSL2561() {}
  *
  * @return success/failure
  */
-bool TSL2561::init() {
+bool spacehauc_i2c::TSL2561::init() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
   uint8_t data = 0x03;
@@ -194,7 +190,7 @@ bool TSL2561::init() {
  *
  * @return The luminosity in lux if data was read, or -1 if data couldn't be.
  */
-double TSL2561::read() {
+double spacehauc_i2c::TSL2561::read() {
   // Read 4 bytes of data from register(0x0C | 0x80)
   // ch0 lsb, ch0 msb, ch1 lsb, ch1 msb
   uint8_t input = 0;
@@ -215,7 +211,7 @@ double TSL2561::read() {
  *
  *  @param address The i2c bus address that the sensor is on
  */
-MCP9808::MCP9808(uint8_t address) {
+spacehauc_i2c::MCP9808::MCP9808(uint8_t address) {
   mAddress = address;
   deviceName = "MCP9808_" + toHexString(address);
 }
@@ -223,7 +219,7 @@ MCP9808::MCP9808(uint8_t address) {
 /*!
  * Destructor for a MCP9808 object
  */
-MCP9808::~MCP9808() {}
+spacehauc_i2c::MCP9808::~MCP9808() {}
 
 /*!
  * init Initializes the sensor by enabling the control register for continuous
@@ -231,7 +227,7 @@ MCP9808::~MCP9808() {}
  *
  * @return success/failure
  */
-bool MCP9808::init() {
+bool spacehauc_i2c::MCP9808::init() {
   // set up control register for continuous conversion
   uint8_t ctlData[] = {0x00, 0x00};
   if (writeBytes(controlRegister, ctlData, 2) <= 0) {
@@ -250,7 +246,7 @@ bool MCP9808::init() {
  *
  * @return current temperature in degrees Celsius
  */
-double MCP9808::read() {
+double spacehauc_i2c::MCP9808::read() {
   uint8_t data[2] = {0};
   if (readBytes(dataRegister, data, 2) <= 0) {
     return -100000;
