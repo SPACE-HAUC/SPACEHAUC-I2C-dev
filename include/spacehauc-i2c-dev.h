@@ -14,7 +14,9 @@
 #include <string>
 #include <vector>
 
-
+/*!
+ * Namespace for I2C sensors/devices
+ */
 namespace spacehauc_i2c {
 
 using std::vector;

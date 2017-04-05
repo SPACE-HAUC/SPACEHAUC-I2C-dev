@@ -1,14 +1,20 @@
 <!-- Replace the below line with your own Travis-CI build label. -->
-[![Build Status](https://travis-ci.org/SpaceHAUC-Command-and-Data-Handling/SPACEHAUC-I2C-dev.svg?branch=master)](https://travis-ci.org/SpaceHAUC-Command-and-Data-Handling/SPACEHAUC-I2C-dev)
+[![Build Status](https://travis-ci.org/SpaceHAUC-Command-and-Data-Handling/SPACEHAUC-I2C-dev.svg?branch=master)](https://travis-ci.org/SpaceHAUC-Command-and-Data-Handling/SPACEHAUC-I2C-dev) [![Managed with Taiga.io](https://camo.githubusercontent.com/eec9589abe09569dc4a1706b36527b49051b89db/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6d616e61676564253230776974682d54616967612e696f2d677265656e2e737667)](https://taiga.io "Managed with Taiga.io")
 
-[![Managed with Taiga.io](https://camo.githubusercontent.com/eec9589abe09569dc4a1706b36527b49051b89db/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6d616e61676564253230776974682d54616967612e696f2d677265656e2e737667)](https://taiga.io "Managed with Taiga.io")
-
-## SPACEHAUC I2C DEV TOOLS API EMERALD RELEASE (ALPHA v0.5.1.0)
+## SPACEHAUC I2C DEV TOOLS API EMERALD RELEASE (ALPHA v0.5.1.1)
 
 This is a library managed by the UMass Lowell SPACE HAUC Command and Data Handling Team. Its various functions should make using I2C in Linux on the raspberry pi much easier. Currently in Alpha release, with support for temperature sensors and luminosity sensors. The library should be easily expandable to accommodate more sensors in a future release.
 
 #### Using This Library
-This i2c header file and implementation file, when placed inside your include and src folders of cmake (respectively) should greatly simplify the use of I2C. Instead of complex function calls and weird arrays, our I2C library first requires you to initialize the hardware bus that your i2c device will be communicating over:
+
+This i2c header file and implementation file, when placed inside your include and src folders of cmake (respectively) should greatly simplify the use of I2C.
+
+```C++
+#include "spacehauc-i2c-dev.h"
+using namespace spacehauc_i2c;  // yes I know this is bad, this is just easier to show for an example.
+```  
+
+Instead of complex function calls and weird arrays, our I2C library first requires you to initialize the hardware bus that your i2c device will be communicating over:
 
 ```C++
 int bus = 1;
@@ -55,7 +61,13 @@ Temperature Sensor MCP9808_0x18: 26.5 C
 
 ### Mocking
 
+Have some code that uses this library but no physical sensors? Simply change your include directive and your namespace:
 
+```C++
+#include "spacehauc-i2c-mock.h"
+using namespace spacehauc_i2c_mock; // yes I know this is bad, this is just easier to show for an example.
+```
 
+This will allow your program to still run correctly, and the mocking library will assume that I2C communications are working, and fake I2C output will be generated from the code.
 
-[![GPL License](http://darrienglasser.com/gpl-v3-logo.jpg)](http://www.gnu.org/licenses/gpl-3.0.en.html)
+[![SPACEHAUC Logo](http://djbaumann.github.io/images/spacehauclogo.png)](https://www.uml.edu/Research/LoCSST/Research/spacehauc/about.aspx)[![GPL License](http://darrienglasser.com/gpl-v3-logo.jpg)](http://www.gnu.org/licenses/gpl-3.0.en.html)
