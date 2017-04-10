@@ -13,6 +13,10 @@ include_directories(include include/api)
 
 file(GLOB SOURCES "src/*.cpp")
 
+ADD_LIBRARY(spacehauc_i2c_dev SHARED src/spacehauc-i2c-dev.cpp)
+ADD_LIBRARY(spacehauc_i2c_mock SHARED src/spacehauc-i2c-mock.cpp)
+
+
 # Change name of executable to desired name
 add_executable(${PROJECT_NAME} ${SOURCES})
 

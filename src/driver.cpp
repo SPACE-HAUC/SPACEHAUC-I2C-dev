@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include "../include/spacehauc-i2c-dev.h"
+#include "../include/spacehauc-i2c-mock.h"
 
 using std::vector;
 using std::string;
@@ -16,47 +17,52 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-using spacehauc_i2c::I2C_Bus;
-using spacehauc_i2c::TSL2561;
-using spacehauc_i2c::MCP9808;
+void testTemperatureSensor();
+void testLuminositySensor();
+void testMock();
 
-bool testTemperatureSensor();
-bool testLuminositySensor();
+// using spacehauc_i2c::I2C_Bus;
+// using spacehauc_i2c::TSL2561;
+// using spacehauc_i2c::MCP9808;
+
+// using spacehauc_i2c_mock::I2C_Bus;
+// using spacehauc_i2c_mock::TSL2561;
+// using spacehauc_i2c_mock:: MCP9808;
 
 int main(int argc, char* argv[]) {
   cout << "SPACEHAUC I2C Library Driver" << endl;
-  cout << "Initializing Bus" << endl;
+  cout << "------TESTING HARDWARE------" << endl;
+  cout << "Initializing Bus..." << endl;
   int bus = 1;  // the first i2c bus
-  if (I2C_Bus::init(bus) == false) {
-    cerr << "Error: I2C bus failed to open." << endl;
+  try {
+    spacehauc_i2c::I2C_Bus::init(bus);
+  } catch (std::exception& e) {
+    cout << "\nERROR: " << e.what() << "\n" << endl;
   }
   cout << "Testing Temperature Sensor..." << endl;
-  if (testTemperatureSensor()) {
-    cout << "Success" << endl;
-  } else {
-    cout << "Failure" << endl;
+  try {
+    testTemperatureSensor();
+  } catch (std::exception& e) {
+    cout << "\nERROR: " <<  e.what() << "\n" << endl;
   }
   cout << "Testing Luminosity Sensor..." << endl;
-  if (testLuminositySensor()) {
-    cout << "Success" << endl;
-  } else {
-    cout << "Failure" << endl;
+  try {
+    testLuminositySensor();
+  } catch (std::exception& e) {
+    cout << "\nERROR: " << e.what() << "\n" << endl;
+  }
+  cout << "\n------TESTING MOCKING------\n" << endl;
+  try {
+    testMock();
+  } catch (std::exception& e) {
+    cout << "\nERROR: " << e.what()<< "\n" << endl;
   }
   return 0;
 }
 
-bool testTemperatureSensor() {
-  /*
-  uint8_t address = 0x1d;
-  uint8_t ID_register = 0x0F;
-  uint8_t ctlRegister = 0x24;
-  uint8_t dataRegister = 0x05;
-  */
-  MCP9808 tempSensor(0x18);
-  if (tempSensor.init() == false) {
-    cerr << "Error: Temperature Sensor failed to initalize." << endl;
-    return false;
-  }
+void testTemperatureSensor() {
+  spacehauc_i2c::MCP9808 tempSensor(0x18);
+  tempSensor.init();
   cout << "Initialized Temperature Sensor" << endl;
   cout << "Reading Temperature data..." << endl;
   for (int i = 0; i < 5; ++i) {
@@ -64,20 +70,42 @@ bool testTemperatureSensor() {
     cout << tempSensor.read() << endl;
     usleep(500000);
   }
-  return true;
 }
 
-bool testLuminositySensor() {
-  TSL2561 light(0x39);
-  if (light.init() == false) {
-    cerr << "Error: Luminosity Sensor failed to initialize." << endl;
-    return false;
-  }
+void testLuminositySensor() {
+  spacehauc_i2c::TSL2561 light(0x39);
+  light.init();
   cout << "Initialized Luminosity Sensor" << endl;
   cout << "Reading light intensity data..." << endl;
   for (int i = 0; i < 5; ++i) {
-    cout << light.getName() << ": Luminosity = " << light.read() << endl;
+    cout << light.getName() << ": Luminosity = ";
+    cout << light.read() << endl;
     sleep(1);
   }
-  return true;
+}
+
+void testMock() {
+  int bus = 1;
+  cout << "Initializing Mock Bus..." << endl;
+  spacehauc_i2c_mock::I2C_Bus::init(bus);
+
+  spacehauc_i2c_mock::MCP9808 tempSensor(0x18);
+  tempSensor.init();
+  cout << "Initialized Temperature Sensor" << endl;
+  cout << "Reading Temperature data..." << endl;
+  for (int i = 0; i < 5; ++i) {
+    cout << tempSensor.getName() << ": Temperature = ";
+    cout << tempSensor.read() << endl;
+    usleep(500000);
+  }
+
+  spacehauc_i2c_mock::TSL2561 light(0x39);
+  light.init();
+  cout << "Initialized Luminosity Sensor" << endl;
+  cout << "Reading light intensity data..." << endl;
+  for (int i = 0; i < 5; ++i) {
+    cout << light.getName() << ": Luminosity = ";
+    cout << light.read() << endl;
+    sleep(1);
+  }
 }

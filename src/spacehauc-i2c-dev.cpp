@@ -16,11 +16,37 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <exception>
 
 using std::string;
 using std::cout;
 using std::endl;
 using std::stringstream;
+
+class BUS_INIT_FAILURE : public std::exception {
+public:
+    const char* what() const throw() {
+    return "I2C Bus Failed To Open";
+  }
+} bus_init_failure;
+
+class READ_FAILURE : public std::exception {
+  const char* what() const throw() {
+    return "Failed to read data from I2C bus";
+  }
+} read_failure;
+
+class WRITE_FAILURE : public std::exception {
+  const char* what() const throw() {
+    return "Failed to write data to I2C bus";
+  }
+} write_failure;
+
+class INIT_FAILURE : public std::exception {
+  const char* what() const throw() {
+    return "Device Failed to initialize";
+  }
+} init_failure;
 
 
 /*!
@@ -45,15 +71,13 @@ int spacehauc_i2c::I2C_Bus::file = -1;  // default to not opened
 * @param bus The i2c bus number to be enabled. (Almost always 1)
 * @return success/failure
 */
-bool spacehauc_i2c::I2C_Bus::init(int bus) {
+void spacehauc_i2c::I2C_Bus::init(int bus) {
   string I2C_bus_name = "/dev/i2c-" + std::to_string(bus);
   file = open(I2C_bus_name.c_str(), O_RDWR);
-  if (file > 0) {
-    return true;
+  if (file <= 0) {
+    throw bus_init_failure;
   }
-  return false;
 }
-
 /*!
  * Destructor for an I2C_Bus object
  */
@@ -108,7 +132,11 @@ int spacehauc_i2c::I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t c
   packets.msgs      = messages;
   packets.nmsgs     = 2;
 
-  return I2C_ctl(&packets);
+  int returnVal = I2C_ctl(&packets);
+  if (returnVal != count) {
+    throw read_failure;
+  }
+  return returnVal;
 }
 
 /*!
@@ -139,7 +167,11 @@ int spacehauc_i2c::I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t 
   packets.msgs      = messages;
   packets.nmsgs     = 1;
 
-  return I2C_ctl(&packets);
+  int returnVal = I2C_ctl(&packets);
+  if (returnVal != count) {
+    throw write_failure;
+  }
+  return returnVal;
 }
 
 string spacehauc_i2c::I2C_Device::getName() {
@@ -169,20 +201,23 @@ spacehauc_i2c::TSL2561::~TSL2561() {}
  *
  * @return success/failure
  */
-bool spacehauc_i2c::TSL2561::init() {
+void spacehauc_i2c::TSL2561::init() {
   // Select control register(0x00 | 0x80)
   // Power ON mode(0x03)
   uint8_t data = 0x03;
-  if (writeBytes(controlRegister1 | 0x80, &data, 1) <= 0) {
-    return false;
+  try {
+    writeBytes(controlRegister1 | 0x80, &data, 1);
+  } catch (...) {
+    throw init_failure;
   }
   // Select timing register(0x01 | 0x80)
   // Nominal integration time = 402ms(0x02)
   data = 0x02;
-  if (writeBytes(controlRegister2 | 0x80, &data, 1) <= 0) {
-    return false;
+  try {
+    writeBytes(controlRegister2 | 0x80, &data, 1);
+  } catch (...) {
+    throw init_failure;
   }
-  return true;
 }
 
 /*!
@@ -227,17 +262,20 @@ spacehauc_i2c::MCP9808::~MCP9808() {}
  *
  * @return success/failure
  */
-bool spacehauc_i2c::MCP9808::init() {
+void spacehauc_i2c::MCP9808::init() {
   // set up control register for continuous conversion
   uint8_t ctlData[] = {0x00, 0x00};
-  if (writeBytes(controlRegister, ctlData, 2) <= 0) {
-    return false;
+  try {
+    writeBytes(controlRegister, ctlData, 2);
+  } catch (...) {
+    throw init_failure;
   }
-  uint8_t resolutionData[] = {0x03};
-  if (writeBytes(resolutionRegister, resolutionData, 1) <= 0) {
-    return false;
+  uint8_t resolutionData[] = {0x03};  // resolution = 0.0625 Cs
+  try {
+    writeBytes(resolutionRegister, resolutionData, 1);
+  } catch (...) {
+    throw init_failure;
   }
-  return true;
 }
 
 /*!
