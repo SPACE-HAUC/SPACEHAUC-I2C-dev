@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "../include/spacehauc-i2c-mock.h"
+#include "../include/spacehauc-i2c-dev.h"
 
 using std::vector;
 using std::string;
@@ -16,9 +16,9 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-using spacehauc_i2c_mock::I2C_Bus;
-using spacehauc_i2c_mock::TSL2561;
-using spacehauc_i2c_mock::MCP9808;
+using spacehauc_i2c::I2C_Bus;
+using spacehauc_i2c::TSL2561;
+using spacehauc_i2c::MCP9808;
 
 bool testTemperatureSensor();
 bool testLuminositySensor();

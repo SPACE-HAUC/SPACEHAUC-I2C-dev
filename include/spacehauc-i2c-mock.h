@@ -10,14 +10,22 @@
 #define INCLUDE_SPACEHAUC_I2C_MOCK_H_
 
 #include "spacehauc-i2c-dev.h"
-
+/*!
+ * Namespace for mocked I2C devices
+ */
 namespace spacehauc_i2c_mock {
-
+  /*!
+   * Overrides the I2C_Bus function init to make it always succeed for mocking purposes
+   */
   class I2C_Bus : public spacehauc_i2c::I2C_Bus {
   public:
     static bool init(int busNum);
   };
 
+  /*!
+   * Overrides the class TSL2561 to make the init function always succeed and the read function
+   * return a random reading within an expected range of values.
+   */
   class TSL2561 : public spacehauc_i2c::TSL2561 {
   public:
     TSL2561(uint8_t address) : spacehauc_i2c::TSL2561(address) {}
@@ -26,6 +34,10 @@ namespace spacehauc_i2c_mock {
     double read();
   };
 
+  /*!
+   * Overrides the class MCP9808 to make the init function always succeed and the read function
+   * return a random reading within an expected range of values.
+   */
   class MCP9808 : public spacehauc_i2c::MCP9808 {
   public:
     MCP9808(uint8_t address) : spacehauc_i2c::MCP9808(address) {}
