@@ -13,14 +13,15 @@
 #include <fcntl.h>
 #include <string>
 #include <vector>
+#include <exception>
+
+using std::vector;
+using std::string;
 
 /*!
  * Namespace for I2C sensors/devices
  */
 namespace spacehauc_i2c {
-
-using std::vector;
-using std::string;
 
 /* converts a base 10 number to a hex value stored in a string */
 string toHexString(uint8_t decimal);
@@ -37,7 +38,7 @@ class I2C_Bus {
  public:
   virtual ~I2C_Bus();
   /*! initialize the bus with the given bus number */
-  static bool init(int busNum);
+  static void init(int busNum);
 };
 
 
@@ -63,7 +64,7 @@ class I2C_Device : public I2C_Bus {
   /*! get the device's name */
   string getName();
   /*! initialize the device */
-  virtual bool init() = 0;
+  virtual void init() = 0;
   /*! read data from the device */
   virtual double read() = 0;
 };
@@ -80,7 +81,7 @@ class TSL2561 : public I2C_Device {
  public:
   explicit TSL2561(uint8_t address);
   ~TSL2561();
-  bool init();
+  void init();
   double read();
 };
 
@@ -97,7 +98,7 @@ class MCP9808 : public I2C_Device {
  public:
   explicit MCP9808(uint8_t address);
   ~MCP9808();
-  bool init();
+  void init();
   double read();
 };
 }  // namespace spacehauc_i2c

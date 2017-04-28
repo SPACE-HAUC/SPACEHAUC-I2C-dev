@@ -19,7 +19,7 @@ namespace spacehauc_i2c_mock {
    */
   class I2C_Bus : public spacehauc_i2c::I2C_Bus {
   public:
-    static bool init(int busNum);
+    static void init(int busNum);
   };
 
   /*!
@@ -30,7 +30,7 @@ namespace spacehauc_i2c_mock {
   public:
     TSL2561(uint8_t address) : spacehauc_i2c::TSL2561(address) {}
 
-    bool init();
+    void init();
     double read();
   };
 
@@ -42,7 +42,7 @@ namespace spacehauc_i2c_mock {
   public:
     MCP9808(uint8_t address) : spacehauc_i2c::MCP9808(address) {}
 
-    bool init();
+    void init();
     double read();
   };
 }  // namespace spacehauc_i2c_mock
