@@ -8,6 +8,15 @@ project (${PROJECT_NAME})
 set(CMAKE_CXX_FLAGS "-std=c++11 -g -Wall")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
+# uncomment to compile for AMD64
+set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib_AMD64")
+set(CMAKE_CXX_COMPILER g++)
+
+# uncomment to compile for ARM
+#set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib_ARM")
+#set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
+
+
 # include directory for headers
 include_directories(include include/api)
 
@@ -16,8 +25,6 @@ file(GLOB SOURCES "src/*.cpp")
 ADD_LIBRARY(spacehauc_i2c_dev SHARED src/spacehauc-i2c-dev.cpp)
 ADD_LIBRARY(spacehauc_i2c_mock SHARED src/spacehauc-i2c-mock.cpp)
 
-
-# Change name of executable to desired name
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Check if pthreads.h is being used

@@ -2,12 +2,11 @@
  * @file
  */
 
- // Copyright 2016 - 2017 David Baumann and Jacob Hempel, UMass Lowell C&DH Team
+// Copyright 2016 - 2017 David Baumann and Jacob Hempel, UMass Lowell C&DH Team
 
 #include "../include/spacehauc-i2c-dev.h"
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
-#include <linux/i2c-dev.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cmath>
@@ -18,31 +17,35 @@
 #include <sstream>
 #include <exception>
 
+using std::vector;
 using std::string;
 using std::cout;
 using std::endl;
 using std::stringstream;
 
 class BUS_INIT_FAILURE : public std::exception {
-public:
+ public:
     const char* what() const throw() {
     return "I2C Bus Failed To Open";
   }
 } bus_init_failure;
 
 class READ_FAILURE : public std::exception {
+ public:
   const char* what() const throw() {
     return "Failed to read data from I2C bus";
   }
 } read_failure;
 
 class WRITE_FAILURE : public std::exception {
+ public:
   const char* what() const throw() {
     return "Failed to write data to I2C bus";
   }
 } write_failure;
 
 class INIT_FAILURE : public std::exception {
+ public:
   const char* what() const throw() {
     return "Device Failed to initialize";
   }
@@ -114,7 +117,8 @@ spacehauc_i2c::I2C_Device::~I2C_Device() {}
  *
  * @return number of bytes exchanged
  */
-int spacehauc_i2c::I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
+int spacehauc_i2c::I2C_Device::readBytes(uint8_t reg, uint8_t *buffer,
+    uint8_t count) {
   struct i2c_rdwr_ioctl_data packets;
   struct i2c_msg messages[2];
   /* write the register we want to read from */
@@ -133,7 +137,7 @@ int spacehauc_i2c::I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t c
   packets.nmsgs     = 2;
 
   int returnVal = I2C_ctl(&packets);
-  if (returnVal != count) {
+  if (returnVal <= 0) {
     throw read_failure;
   }
   return returnVal;
@@ -150,7 +154,8 @@ int spacehauc_i2c::I2C_Device::readBytes(uint8_t reg, uint8_t *buffer, uint8_t c
  *
  * @return number of bytes exchanged
  */
-int spacehauc_i2c::I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t count) {
+int spacehauc_i2c::I2C_Device::writeBytes(uint8_t reg, uint8_t buffer[],
+    uint8_t count) {
   vector<uint8_t> input;
   input.push_back(reg);
   for (int i = 0; i < count; ++i) {
@@ -168,7 +173,7 @@ int spacehauc_i2c::I2C_Device::writeBytes(uint8_t reg, uint8_t *buffer, uint8_t 
   packets.nmsgs     = 1;
 
   int returnVal = I2C_ctl(&packets);
-  if (returnVal != count) {
+  if (returnVal <= 0) {
     throw write_failure;
   }
   return returnVal;
@@ -297,4 +302,324 @@ double spacehauc_i2c::MCP9808::read() {
   }
   double cTemp = temp * 0.0625;
   return cTemp;
+}
+
+/*!
+ * default constructor for LSM303 accelerometer
+ */
+spacehauc_i2c::LSM303_Accelerometer::LSM303_Accelerometer(uint8_t address) {
+  mAddress = address;
+  deviceName = "LSM303_" + toHexString(address);
+}
+
+spacehauc_i2c::LSM303_Accelerometer::~LSM303_Accelerometer() {}
+
+/*!
+ * initializes the accelerometer on LSM303 chip
+ * sets data rate to 100Hz, regular power mode, no high pass filter, +- 2G scale
+ */
+void spacehauc_i2c::LSM303_Accelerometer::init() {
+  uint8_t powerData[] = {0x57};  // enable accelerometer for 100 hz data rate,
+  // regular power operation
+  try {
+    writeBytes(controlRegister1, powerData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+
+  uint8_t filterData[] = {0x00};  // no high pass filter enabled
+  try {
+    writeBytes(controlRegister2, filterData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+
+  uint8_t measurementData[] = {0x00};  // continuous data, little endian,
+  // +- 2G scale, high resolution disabled
+  try {
+    writeBytes(controlRegister4, measurementData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+}
+
+/*!
+ * reads data from Accelerometer, returns vector sum of X, Y, and Z as double
+ */
+double spacehauc_i2c::LSM303_Accelerometer::read() {
+  uint8_t buffer[6] = {0};
+  Triplet<double> accData;
+  double magnitude = 0;
+  readBytes(dataRegister1, &(buffer[0]), 1);
+  readBytes(dataRegister2, &(buffer[1]), 1);
+  readBytes(dataRegister3, &(buffer[2]), 1);
+  readBytes(dataRegister4, &(buffer[3]), 1);
+  readBytes(dataRegister5, &(buffer[4]), 1);
+  readBytes(dataRegister6, &(buffer[5]), 1);
+  accData.setX(static_cast<int16_t>((buffer[1] << 8) + buffer[0]));
+  accData.setX((accData.getX() / 32768.0) * 2);  // divide by total data points
+  // (2^15) then multiply by scale (2)
+  accData.setY(static_cast<int16_t>((buffer[3] << 8) + buffer[2]));
+  accData.setY((accData.getY() / 32768.0) * 2);
+  accData.setZ(static_cast<int16_t>((buffer[5] << 8) + buffer[4]));
+  accData.setZ((accData.getZ() / 32768.0) * 2 * -1);  // negate to make down neg
+
+  magnitude = (pow(accData.getX(), 2) + (pow(accData.getY(), 2))+
+              (pow(accData.getZ(), 2)));
+  return sqrt(magnitude);
+}
+
+/*!
+ * reads data from accelerometer, returns a Triplet of X, Y, and Z
+ */
+spacehauc_i2c::Triplet<double> spacehauc_i2c::LSM303_Accelerometer::
+    readTriplet() {
+  uint8_t buffer[6] = {0};
+  Triplet<double> accData;
+  readBytes(dataRegister1, &(buffer[0]), 1);
+  readBytes(dataRegister2, &(buffer[1]), 1);
+  readBytes(dataRegister3, &(buffer[2]), 1);
+  readBytes(dataRegister4, &(buffer[3]), 1);
+  readBytes(dataRegister5, &(buffer[4]), 1);
+  readBytes(dataRegister6, &(buffer[5]), 1);
+  accData.setX(static_cast<int16_t>((buffer[1] << 8) + buffer[0]));
+  accData.setX((accData.getX() / 32768.0) * 2);  // divide by total data points
+  // (2^15) then multiply by scale (2)
+  accData.setY(static_cast<int16_t>((buffer[3] << 8) + buffer[2]));
+  accData.setY((accData.getY() / 32768.0) * 2);
+  accData.setZ(static_cast<int16_t>((buffer[5] << 8) + buffer[4]));
+  accData.setZ((accData.getZ() / 32768.0) * 2 * -1);  // negate to make down neg
+  return accData;
+}
+
+/*!
+ *  constructor for magnetometer, default address 0x1E
+ */
+spacehauc_i2c::LSM303_Magnetometer::LSM303_Magnetometer(uint8_t address) {
+  mAddress = address;
+  deviceName = "LSM303_" + toHexString(address);
+}
+
+spacehauc_i2c::LSM303_Magnetometer::~LSM303_Magnetometer() {}
+
+/*!
+ * initializes magnetometer, disables thermometer
+ * data rate = 30 Hz, +- 1.3 Gauss, continuous conversion
+ */
+void spacehauc_i2c::LSM303_Magnetometer::init() {
+  uint8_t setupData[] = {0x14};  // disable thermometer, data rate min = 30 Hz
+  try {
+    writeBytes(controlRegister1, setupData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+
+  uint8_t gainData[] = {0x20};  // set gain to +-1.3 Gauss
+  try {
+    writeBytes(controlRegister2, gainData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+
+  uint8_t measurementData[] = {0x00};  // continuous conversion
+  try {
+    writeBytes(controlRegister3, measurementData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+}
+
+/*!
+ * reads data from Magnetometer, returns vector sum of X, Y, and Z as double
+ */
+double spacehauc_i2c::LSM303_Magnetometer::read() {
+  uint8_t buffer[6] = {0};
+  Triplet<double> magData;
+  double magnitude = 0;
+  readBytes(dataRegister1, &(buffer[0]), 1);
+  readBytes(dataRegister2, &(buffer[1]), 1);
+  readBytes(dataRegister3, &(buffer[2]), 1);
+  readBytes(dataRegister4, &(buffer[3]), 1);
+  readBytes(dataRegister5, &(buffer[4]), 1);
+  readBytes(dataRegister6, &(buffer[5]), 1);
+
+  magData.setX(static_cast<int16_t>((buffer[1] << 8) + buffer[0]));
+  magData.setX((magData.getX() / 32768.0) * 1.3);  // divide by num data points
+  // (2^15) then multiply by scale (1.3)
+  magData.setY(static_cast<int16_t>((buffer[3] << 8) + buffer[2]));
+  magData.setY((magData.getY() / 32768.0) * 1.3);
+  magData.setZ(static_cast<int16_t>((buffer[5] << 8) + buffer[4]));
+  magData.setZ((magData.getZ() / 32768.0) * 1.3);
+
+  magnitude = (pow(magData.getX(), 2) + (pow(magData.getY(), 2))+
+              (pow(magData.getZ(), 2)));
+  return sqrt(magnitude);
+}
+/*!
+ * reads data from Magnetometer, Triplet of X, Y, and Z as doubles
+ */
+spacehauc_i2c::Triplet<double> spacehauc_i2c::LSM303_Magnetometer::
+    readTriplet() {
+  uint8_t buffer[6] = {0};
+  Triplet<double> magData;
+  readBytes(dataRegister1, &(buffer[0]), 1);
+  readBytes(dataRegister2, &(buffer[1]), 1);
+  readBytes(dataRegister3, &(buffer[2]), 1);
+  readBytes(dataRegister4, &(buffer[3]), 1);
+  readBytes(dataRegister5, &(buffer[4]), 1);
+  readBytes(dataRegister6, &(buffer[5]), 1);
+
+  magData.setX(static_cast<int16_t>((buffer[1] << 8) + buffer[0]));
+  magData.setX((magData.getX() / 32768.0) * 1.3);  // divide by num data points
+  // (2^15) then multiply by scale (1.3)
+  magData.setY(static_cast<int16_t>((buffer[3] << 8) + buffer[2]));
+  magData.setY((magData.getY() / 32768.0) * 1.3);
+  magData.setZ(static_cast<int16_t>((buffer[5] << 8) + buffer[4]));
+  magData.setZ((magData.getZ() / 32768.0) * 1.3);
+  return magData;
+}
+
+
+spacehauc_i2c::L3GD20::L3GD20(uint8_t address) {
+  mAddress = address;
+  deviceName = "L3GD20_" + toHexString(address);
+}
+
+spacehauc_i2c::L3GD20::~L3GD20() {}
+
+void spacehauc_i2c::L3GD20::init() {
+  uint8_t setupData[] = {0x0F};  // power on, data rate 95Hz, cut-off 12.5,
+  // xyz enabled
+  try {
+    writeBytes(controlRegister1, setupData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+
+  uint8_t filterData[] = {0x00};  // disable high pass filtering
+  try {
+    writeBytes(controlRegister2, filterData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+
+  uint8_t measurementData[] = {0x00};  // continuous conversion, little endian,
+  // 250 degrees/second
+  try {
+    writeBytes(controlRegister4, measurementData, 1);
+  } catch (...) {
+    throw init_failure;
+  }
+}
+
+double spacehauc_i2c::L3GD20::read() {
+  uint8_t buffer[6] = {0};
+  Triplet<double> gyroData;
+  double magnitude;
+  readBytes(dataRegister1, &(buffer[0]), 1);
+  readBytes(dataRegister2, &(buffer[1]), 1);
+  readBytes(dataRegister3, &(buffer[2]), 1);
+  readBytes(dataRegister4, &(buffer[3]), 1);
+  readBytes(dataRegister5, &(buffer[4]), 1);
+  readBytes(dataRegister6, &(buffer[5]), 1);
+
+  gyroData.setX(static_cast<int16_t>((buffer[1] << 8) + buffer[0]));
+  gyroData.setX((gyroData.getX() / 32768.0) * 250);  // divide by data points
+  // (2^15) then multiply by scale (250)
+  gyroData.setY(static_cast<int16_t>((buffer[3] << 8) + buffer[2]));
+  gyroData.setY((gyroData.getY() / 32768.0) * 250);
+  gyroData.setZ(static_cast<int16_t>((buffer[5] << 8) + buffer[4]));
+  gyroData.setZ((gyroData.getZ() / 32768.0) * 250);
+  magnitude = (pow(gyroData.getX(), 2) + (pow(gyroData.getY(), 2))+
+              (pow(gyroData.getZ(), 2)));
+  return sqrt(magnitude);
+}
+
+spacehauc_i2c::Triplet<double> spacehauc_i2c::L3GD20::readTriplet() {
+  uint8_t buffer[6] = {0};
+  Triplet<double> gyroData;
+  readBytes(dataRegister1, &(buffer[0]), 1);
+  readBytes(dataRegister2, &(buffer[1]), 1);
+  readBytes(dataRegister3, &(buffer[2]), 1);
+  readBytes(dataRegister4, &(buffer[3]), 1);
+  readBytes(dataRegister5, &(buffer[4]), 1);
+  readBytes(dataRegister6, &(buffer[5]), 1);
+
+  gyroData.setX(static_cast<int16_t>((buffer[1] << 8) + buffer[0]));
+  gyroData.setX((gyroData.getX() / 32768.0) * 250);  // divide by data points
+  // (2^15) then multiply by scale (250)
+  gyroData.setY(static_cast<int16_t>((buffer[3] << 8) + buffer[2]));
+  gyroData.setY((gyroData.getY() / 32768.0) * 250);
+  gyroData.setZ(static_cast<int16_t>((buffer[5] << 8) + buffer[4]));
+  gyroData.setZ((gyroData.getZ() / 32768.0) * 250);
+  return gyroData;
+}
+
+// centers string in width w
+std::string center(const string s, const int w) {
+    std::stringstream ss, spaces;
+    int padding = w - s.size();                 // count excess room to pad
+    for (int i = 0; i < padding / 2; ++i)
+        spaces << " ";
+    ss << spaces.str() << s << spaces.str();    // format with padding
+    if ( padding > 0 && padding % 2 != 0)         // if odd #, add 1 space
+        ss << " ";
+    return ss.str();
+}
+
+// sets number of decmal digits and right aligns double in width
+std::string prd(const double x, const int decDigits, const int width) {
+    std::stringstream ss;
+    ss << std::fixed << std::right;
+    ss.fill(' ');        // fill space around displayed #
+    ss.width(width);     // set  width around displayed #
+    ss.precision(decDigits);  // set # places after decimal
+    ss << x;
+    return ss.str();
+}
+
+// prints a formatted table of measured values from each sensor in 9Dof
+void spacehauc_i2c::Adafruit9DOF::printTable(int numRows, int uSecDelay) {
+  string name;
+  Triplet<double> data;
+  for (int i = 0; i < numRows; i++) {
+    if (i % 10 == 0) {
+      // header
+      name = "Accelerometer ";
+      name += accelerometer.getName();
+      cout << "|" << center(name, 32) << "|";
+      name = "Magnetometer ";
+      name += magnetometer.getName();
+      cout << center(name, 32) << "|";
+      name = "GyroScope ";
+      name += gyroscope.getName();
+      cout << center(name, 32) << "|" << endl;
+
+      for (int i = 0; i < 100; i++) cout << "-";
+      cout << endl;
+
+      cout << "|" << center("X", 10) << "|" << center("Y", 10) << "|"
+      << center("Z", 10) << "|" << center("X", 10) << "|" << center("Y", 10)
+      << "|" << center("Z", 10) << "|" << center("X", 10) << "|"
+      << center("Y", 10) << "|" << center("Z", 10) << "|" << endl;
+      for (int i = 0; i < 100; i++) cout << "-";
+      cout << endl;
+    }
+    // data
+    data = accelerometer.readTriplet();
+    cout << "|" << center(prd(data.getX(), 3, 5), 10) << "|"
+         << center(prd(data.getY(), 3, 5), 10) << "|"
+         << center(prd(data.getZ(), 3, 5), 10);
+    data = magnetometer.readTriplet();
+    cout << "|" << center(prd(data.getX(), 3, 5), 10) << "|"
+         << center(prd(data.getY(), 3, 5), 10) << "|"
+         << center(prd(data.getZ(), 3, 5), 10);
+    data = gyroscope.readTriplet();
+    cout << "|" << center(prd(data.getX(), 3, 5), 10) << "|"
+         << center(prd(data.getY(), 3, 5), 10) << "|"
+         << center(prd(data.getZ(), 3, 5), 10) << "|" << endl;
+    for (int j = 0; j < 100; j++) cout << "-";
+    cout << endl;
+    usleep(uSecDelay);
+  }
 }
