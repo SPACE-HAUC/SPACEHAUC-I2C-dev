@@ -7,15 +7,10 @@
 #ifndef INCLUDE_SPACEHAUC_I2C_DEV_H_
 #define INCLUDE_SPACEHAUC_I2C_DEV_H_
 
-#include <sys/ioctl.h>
-#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
-#include <fcntl.h>
 #include <string>
-#include <vector>
-#include <exception>
+#include <iostream>
 
-using std::vector;
 using std::string;
 
 /*!
@@ -33,7 +28,7 @@ class I2C_Bus {
     */
   static int file;
  protected:
-   /*! Wrapper for ioctl system call */
+  /*! Wrapper for ioctl system call */
   int I2C_ctl(i2c_rdwr_ioctl_data *packets);
  public:
   virtual ~I2C_Bus();
@@ -101,6 +96,120 @@ class MCP9808 : public I2C_Device {
   void init();
   double read();
 };
+
+template<class T>
+class Triplet {
+ private:
+  T X;
+  T Y;
+  T Z;
+ public:
+  Triplet() : X(0), Y(0), Z(0) {}
+  Triplet(T x, T y, T z) : X(x), Y(y), Z(z) {}
+  T getX() const {return X;}
+  T getY() const {return Y;}
+  T getZ() const {return Z;}
+  void setX(T x) {X = x;}
+  void setY(T y) {Y = y;}
+  void setZ(T z) {Z = z;}
+  Triplet<T> operator=(Triplet<T> rVal) {
+    X = rVal.X;
+    Y = rVal.Y;
+    Z = rVal.Z;
+    return rVal;
+  }
+};
+
+
+/*!
+ * This is a class for the LSM303 Accelerometer, set up to measure +-2G
+ * at 100Hz
+ */
+class LSM303_Accelerometer : public I2C_Device {
+ private:
+  // const uint8_t ID_register;
+  const uint8_t dataRegister1 = 0x28;  // LSB of x value
+  const uint8_t dataRegister2 = 0x29;  // MSB of x value
+  const uint8_t dataRegister3 = 0x2A;  // LSB of y value
+  const uint8_t dataRegister4 = 0x2B;  // MSB of y value
+  const uint8_t dataRegister5 = 0x2C;  // LSB of x value
+  const uint8_t dataRegister6 = 0x2D;  // LSB of x value
+  const uint8_t controlRegister1 = 0x20;
+  const uint8_t controlRegister2 = 0x21;
+  const uint8_t controlRegister4 = 0x23;
+  // no need to access 3, 5, or 6; default values at those control regs is fine
+ public:
+  explicit LSM303_Accelerometer(uint8_t address = 0x19);
+  ~LSM303_Accelerometer();
+  void init();
+  double read();  // reads total G force (magnitude of acceleration vector)
+  Triplet<double> readTriplet();  // reads each axis of acceleration
+};
+
+/*!
+ * This is a class for the LSM303 magnetometer, set up to measure +-1.3 Gauss
+ * at 30Hz
+ */
+class LSM303_Magnetometer : public I2C_Device {
+ private:
+  const uint8_t dataRegister1 = 0x03;  // LSB of x value
+  const uint8_t dataRegister2 = 0x04;  // MSB of x value
+  const uint8_t dataRegister3 = 0x05;  // LSB of y value
+  const uint8_t dataRegister4 = 0x06;  // MSB of y value
+  const uint8_t dataRegister5 = 0x07;  // LSB of x value
+  const uint8_t dataRegister6 = 0x08;  // LSB of x value
+  const uint8_t controlRegister1 = 0x00;
+  const uint8_t controlRegister2 = 0x01;
+  const uint8_t controlRegister3 = 0x02;
+ public:
+  explicit LSM303_Magnetometer(uint8_t address = 0x1E);
+  ~LSM303_Magnetometer();
+  void init();
+  double read();  // reads total mag field (magnitude of field vector)
+  Triplet<double> readTriplet();  // reads each axis of magnetic field
+};
+
+
+/*!
+ * THis is a class for the L3GD20 gyroscope
+ */
+class L3GD20 : public I2C_Device {
+ private:
+  const uint8_t dataRegister1 = 0x28;  // LSB of x value
+  const uint8_t dataRegister2 = 0x29;  // MSB of x value
+  const uint8_t dataRegister3 = 0x2A;  // LSB of y value
+  const uint8_t dataRegister4 = 0x2B;  // MSB of y value
+  const uint8_t dataRegister5 = 0x2C;  // LSB of x value
+  const uint8_t dataRegister6 = 0x2D;  // LSB of x value
+  const uint8_t controlRegister1 = 0x20;
+  const uint8_t controlRegister2 = 0x21;
+  const uint8_t controlRegister4 = 0x23;  // access to 3 and 5 not needed
+ public:
+  explicit L3GD20(uint8_t address = 0x6B);
+  ~L3GD20();
+  void init();
+  double read();
+  Triplet<double> readTriplet();
+};
+
+/*!
+ * Wrapper Class for Adafruit's 9DOF board, which has 2 chips:
+ * LSM303, which has accelerometer and magnetometer, and L3GD20 which has the
+ * gyroscope
+ */
+class Adafruit9DOF {
+ public:
+  LSM303_Accelerometer accelerometer;
+  LSM303_Magnetometer magnetometer;
+  L3GD20 gyroscope;
+  Adafruit9DOF() : accelerometer(0x19), magnetometer(0x1E), gyroscope(0x6B) {}
+  Adafruit9DOF(uint8_t accelAddr, uint8_t magAddr, uint8_t gyroAddr) :
+              accelerometer(accelAddr), magnetometer(magAddr),
+              gyroscope(gyroAddr) {}
+  /*! prints a formatted table of all data from each sensor */
+  void printTable(int numRows = 1, int uSecDelay = 500000);
+};
+
 }  // namespace spacehauc_i2c
 
 #endif  // INCLUDE_SPACEHAUC_I2C_DEV_H_
