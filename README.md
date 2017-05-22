@@ -11,7 +11,7 @@ This i2c header file and implementation file, when placed inside your include an
 
 ```C++
 #include "spacehauc-i2c-dev.h"
-using namespace spacehauc_i2c;  // yes I know this is bad, this is just easier to show for an example.
+using namespace spacehauc_i2c;  
 ```  
 
 Instead of complex function calls and weird arrays, our I2C library first requires you to initialize the hardware bus that your i2c device will be communicating over:
@@ -29,11 +29,11 @@ Then you need to create an object with an overloaded constructor that includes a
 MCP9808 tempSensor(0x18);
 ```
 
-Then, by calling the method .init() on the object, you can prepare the tempSensor to be read. .init() returns a boolean, true if the initialization succeeded and false if it failed, which can be used to error check. Other supported devices will have a .init() member function for setting up the device.
+Then, by calling the .init() method on the object, you can prepare the tempSensor to be read. .init() returns a boolean, true if the initialization succeeded and false if it failed, which can be used to error check. Other supported devices will have an .init() member function for setting up the device.
 
 ```C++
 if (tempSensor.init() == false) {
-  cerr << "Error: Temperature Sensor failed to initalize." << endl;
+  cerr << "Error: Temperature Sensor failed to initialize." << endl;
 }
 ```
 
@@ -77,7 +77,7 @@ Have some code that uses this library but no physical sensors? Simply change you
 
 ```C++
 #include "spacehauc-i2c-mock.h"
-using namespace spacehauc_i2c_mock; // yes I know this is bad, this is just easier to show for an example.
+using namespace spacehauc_i2c_mock;
 ```
 
 This will allow your program to still run correctly, and the mocking library will assume that I2C communications are working, and fake I2C output will be generated from the code.
