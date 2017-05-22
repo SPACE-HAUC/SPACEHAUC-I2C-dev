@@ -7,14 +7,14 @@ This is a library managed by the UMass Lowell SPACE HAUC Command and Data Handli
 
 #### Using This Library
 
-This i2c header file and implementation file, when placed inside your include and src folders of cmake (respectively) should greatly simplify the use of I2C.
+To begin using this library, place "spacehauc-i2c-dev.h" in the include directory or your Cmake repository, place spacehauc-i2c-dev.cpp in the src directory of your Cmake repository, and be sure to include the header in any program that uses I2C.
 
 ```C++
 #include "spacehauc-i2c-dev.h"
 using namespace spacehauc_i2c;  
 ```  
 
-Instead of complex function calls and weird arrays, our I2C library first requires you to initialize the hardware bus that your i2c device will be communicating over:
+Instead of complex function calls and weird arrays, our I2C library first requires you to initialize the hardware bus that your i2c device will be communicating over using the bool I2C_Bus::init(int bus) function. Combined with some basic error checking, the init step should look like this:
 
 ```C++
 int bus = 1;
@@ -23,13 +23,13 @@ if (I2C_Bus::init(bus) == false) {
 }
 ```
 
-Then you need to create an object with an overloaded constructor that includes all the data required by your device. If you are using a device that is well supported by our library, it should be as simple as ClassName ObjectName(address). For example, an object for the Adafruit MCP9808 temperature sensor can be created with the line :
+Then you need to create an object with an overloaded constructor that includes all the data required by your device. If you are using a device that is well supported by our library, it should be as simple as ClassName ObjectName(I2C address). For example, an object for the Adafruit MCP9808 temperature sensor can be created with the line :
 
 ```C++
 MCP9808 tempSensor(0x18);
 ```
 
-Then, by calling the .init() method on the object, you can prepare the tempSensor to be read. .init() returns a boolean, true if the initialization succeeded and false if it failed, which can be used to error check. Other supported devices will have an .init() member function for setting up the device.
+Then, by calling the .init() method on the object, you can prepare the tempSensor to be read. .init() returns a boolean, true if the initialization succeeded and false if it failed, which can be used to error check. Other supported devices will have an .init() member function for setting up the device. For the tempSensor object constructed above, the init call would look something like this:
 
 ```C++
 if (tempSensor.init() == false) {
